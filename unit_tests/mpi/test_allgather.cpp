@@ -83,4 +83,34 @@ void test_allgather_1d_contig() {
 
 TYPED_TEST(Allgather, 1D_contig) { test_allgather_1d_contig<typename TestFixture::Scalar>(); }
 
+template <typename Scalar>
+void test_allgather_1d_inplace_contig() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  const int nContrib = 10;
+
+  Kokkos::View<Scalar *> rv("rv", size * nContrib);
+
+  // fill send buffer
+  Kokkos::parallel_for(
+      nContrib, KOKKOS_LAMBDA(const int i) { rv(rank * nContrib + i) = rank + i; });
+
+  KokkosComm::mpi::allgather(Kokkos::DefaultExecutionSpace(), rv, nContrib, MPI_COMM_WORLD);
+
+  int errs;
+  Kokkos::parallel_reduce(
+      rv.extent(0),
+      KOKKOS_LAMBDA(const int &i, int &lsum) {
+        const int src = i / nContrib;
+        const int j   = i % nContrib;
+        lsum += rv(i) != src + j;
+      },
+      errs);
+  EXPECT_EQ(errs, 0);
+}
+
+TYPED_TEST(Allgather, 1D_inplace_contig) { test_allgather_1d_inplace_contig<typename TestFixture::Scalar>(); }
+
 }  // namespace

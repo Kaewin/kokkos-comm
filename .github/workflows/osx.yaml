@@ -21,7 +21,7 @@ jobs:
       COMM_SRC: ${{ github.workspace }}
       COMM_BUILD: ${{ github.workspace }}/build
     runs-on: macos-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Install MPI
         run: |
@@ -55,7 +55,7 @@ jobs:
       COMM_SRC: ${{ github.workspace }}
       COMM_BUILD: ${{ github.workspace }}/build
     runs-on: macos-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Install MPI
         run: |
