@@ -25,7 +25,7 @@
 #if defined(KOKKOSCOMM_ENABLE_MPI)
 #include "mpi/mpi_space.hpp"
 
-#include "mpi/channel.hpp"
+//#include "mpi/channel.hpp"
 #include "mpi/window.hpp"
 #include "mpi/comm_mode.hpp"
 #include "mpi/handle.hpp"
