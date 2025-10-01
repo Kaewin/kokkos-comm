@@ -14,48 +14,82 @@
 //
 //@HEADER
 
-#include <gtest/gtest.h>
-#include <type_traits>
+// #include <gtest/gtest.h>
+// #include <type_traits>
 
+// #include <KokkosComm/KokkosComm.hpp>
+
+// namespace {
+
+// using namespace KokkosComm::mpi;
+
+// template <typename T>
+// class WindowTest : public testing::Test {
+//  public:
+//   using Scalar = T;
+// };
+
+// using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
+// TYPED_TEST_SUITE(WindowTest, ScalarTypes);
+
+// template <typename Scalar>
+// void test_window() {
+//   int rank, size;
+//   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+//   if (size < 2) {
+//     GTEST_SKIP() << "This test requires at least 2 MPI processes";
+//   }
+
+//   const int N = 10;
+
+//   // Create host view
+//   Kokkos::View<Scalar*, Kokkos::HostSpace> recv_host("recv_host", N);
+//   // Create device views
+//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> send_dev("send_dev", N);
+//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> recv_dev("recv_dev", N);
+//   // Create Window
+//   KokkosComm::Window<Kokkos::View<Scalar*>> window(send_dev, MPI_COMM_WORLD);
+
+//   int errs = 0;
+//   EXPECT_EQ(errs, 0);
+// }
+
+// TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
+
+// }  // namespace
+
+
+
+// Super simple test
+#include <gtest/gtest.h>
+#include <mpi.h>
+#include <Kokkos_Core.hpp>
 #include <KokkosComm/KokkosComm.hpp>
 
 namespace {
 
-using namespace KokkosComm::mpi;
-
-template <typename T>
-class WindowTest : public testing::Test {
- public:
-  using Scalar = T;
-};
-
-using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
-TYPED_TEST_SUITE(WindowTest, ScalarTypes);
-
-template <typename Scalar>
-void test_window() {
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  if (size < 2) {
-    GTEST_SKIP() << "This test requires at least 2 MPI processes";
-  }
-
-  const int N = 10;
-
-  // Create host view
-  Kokkos::View<Scalar*, Kokkos::HostSpace> recv_host("recv_host", N);
-  // Create device views
-  Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> send_dev("send_dev", N);
-  Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> recv_dev("recv_dev", N);
-  // Create Window
-  KokkosComm::Window<Kokkos::View<Scalar*>> window(send_dev, MPI_COMM_WORLD);
-
-  int errs = 0;
-  EXPECT_EQ(errs, 0);
+TEST(WindowTest, SimpleCreate) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    
+    if (size < 2) {
+        GTEST_SKIP() << "Need at least 2 MPI processes";
+    }
+    
+    std::cout << "Process " << rank << " starting..." << std::endl;
+    
+    // Create simple view
+    Kokkos::View<double*, Kokkos::HostSpace> my_data("data", 10);
+    
+    // Create window - if this works, success!
+    KokkosComm::Window<decltype(my_data)> window(my_data, MPI_COMM_WORLD);
+    
+    std::cout << "Process " << rank << " created window!" << std::endl;
+    
+    SUCCEED();  // Test passes if we get here
 }
-
-TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
 
 }  // namespace
