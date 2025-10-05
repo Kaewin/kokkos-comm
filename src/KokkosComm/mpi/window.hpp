@@ -36,6 +36,8 @@ class Window {
 
   ~Window() { MPI_Win_free(&win); }
 
+  MPI_Win getWin() const { return win; }
+
  private:
   ViewType v_;
   MPI_Comm comm_;
