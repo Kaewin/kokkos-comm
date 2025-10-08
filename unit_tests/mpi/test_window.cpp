@@ -42,18 +42,56 @@ void test_window() {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
 
-  const int N = 10;
+// Going to build on the existing testing code
 
-  // Create host view
-  Kokkos::View<Scalar*, Kokkos::HostSpace> recv_host("recv_host", N);
-  // Create device views
-  Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> send_dev("send_dev", N);
-  Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> recv_dev("recv_dev", N);
-  // Create Window
-  KokkosComm::Window<Kokkos::View<Scalar*>> window(send_dev, MPI_COMM_WORLD);
+/*
+Old code:
+*/
 
-  int errs = 0;
-  EXPECT_EQ(errs, 0);
+//   const int N = 10;
+
+//   // Create host view
+//   Kokkos::View<Scalar*, Kokkos::HostSpace> recv_host("recv_host", N);
+//   // Create device views
+//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> send_dev("send_dev", N);
+//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> recv_dev("recv_dev", N);
+//   // Create Window
+//   KokkosComm::Window<Kokkos::View<Scalar*>> window(send_dev, MPI_COMM_WORLD);
+
+//   int errs = 0;
+//   EXPECT_EQ(errs, 0);
+
+
+
+	// One-element view, like below
+    Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+    data(0) = static_cast<Scalar>(rank);
+
+    // Create window
+    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+    // Sync
+    MPI_Win_fence(0, win.getWin());
+
+    // Rank 0 puts value 99 to rank 1
+    if (rank == 0) {
+        Scalar value = static_cast<scalar>(99);
+
+        MPI_Datatype mpi_type = MPI_BYTE;
+        if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
+        if (std::is_same<Scalar, float>::value) mpi_type = MPI_FLOAT;
+        if (std::is_same<Scalar, int>::value) mpi_type = MPI_INT;
+
+        MPI_Put(&value, 1, mpi_type, 1, 0, 1, mpi_type, window.getWin());
+    }
+
+    // Sync again
+    MPI_Win_fence(0, window.getWin());
+
+    // Check results
+    if (rank == 1) {
+        EXPECT_EQ(data(0), static_cast<Scalar>(99));
+    }
 }
 
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
