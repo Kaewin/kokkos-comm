@@ -71,11 +71,11 @@ Old code:
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
 
     // Sync
-    MPI_Win_fence(0, win.getWin());
+    MPI_Win_fence(0, window.getWin());
 
     // Rank 0 puts value 99 to rank 1
     if (rank == 0) {
-        Scalar value = static_cast<scalar>(99);
+        Scalar value = static_cast<Scalar>(99);
 
         MPI_Datatype mpi_type = MPI_BYTE;
         if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
