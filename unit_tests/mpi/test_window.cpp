@@ -23,15 +23,24 @@ namespace {
 using namespace KokkosComm::mpi;
 
 // Existing Test:
+// Google test will execute test_window() once for each datatype in ScalarTypes.
 template <typename T>
 class WindowTest : public testing::Test {
  public:
   using Scalar = T;
 };
 
+// List of types to test
+// The test will run 6 times, one for each type
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(WindowTest, ScalarTypes);
 
+
+// Main typed test
+// Window class can create MPI windows from Kokkos Views
+// getWin() method gives access to window handle
+// MPI_Put writes to remote memory through the window
+// Tests with different data types
 template <typename Scalar>
 void test_window() {
   int rank, size;
@@ -65,6 +74,7 @@ Old code:
 
 	// One-element view, like below
     Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+    // Initialize each process's data to it's own rank number
     data(0) = static_cast<Scalar>(rank);
 
     // Create window
@@ -77,6 +87,7 @@ Old code:
     if (rank == 0) {
         Scalar value = static_cast<Scalar>(99);
 
+        // Determine MPI datatype
         MPI_Datatype mpi_type = MPI_BYTE;
         if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
         if (std::is_same<Scalar, float>::value) mpi_type = MPI_FLOAT;
