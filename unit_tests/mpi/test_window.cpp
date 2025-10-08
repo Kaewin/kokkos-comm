@@ -77,16 +77,16 @@ TEST(WindowTest, BasicPut) {
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
     
     // Synchronize
-    MPI_Win_fence(0, window.get_win());
+    MPI_Win_fence(0, window.getWin());
     
     // Rank 0 puts value 42 to rank 1
     if (rank == 0) {
         double value = 42.0;
-        MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.get_win());
+        MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.getWin());
     }
     
     // Synchronize
-    MPI_Win_fence(0, window.get_win());
+    MPI_Win_fence(0, window.getWin());
     
     // Check result
     if (rank == 1) {
