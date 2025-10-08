@@ -22,6 +22,7 @@ namespace {
 
 using namespace KokkosComm::mpi;
 
+// Existing Test:
 template <typename T>
 class WindowTest : public testing::Test {
  public:
@@ -56,5 +57,43 @@ void test_window() {
 }
 
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
+
+
+// Begin new test:
+TEST(WindowTest, BasicPut) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if (size < 2) {
+        GTEST_SKIP() << "This test requires at least 2 MPI processes.";
+    }
+
+    // Create view with initial value = rank
+    Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
+    data(0) = rank;
+    
+    // Create window
+    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+    
+    // Synchronize
+    MPI_Win_fence(0, window.get_win());
+    
+    // Rank 0 puts value 42 to rank 1
+    if (rank == 0) {
+        double value = 42.0;
+        MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.get_win());
+    }
+    
+    // Synchronize
+    MPI_Win_fence(0, window.get_win());
+    
+    // Check result
+    if (rank == 1) {
+        EXPECT_EQ(data(0), 42.0);
+    }
+
+}
+
 
 }  // namespace
