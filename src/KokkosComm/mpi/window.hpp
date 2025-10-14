@@ -43,7 +43,7 @@ class Window {
   template <typename T>
   void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
 
-    MPI_Datatype = datatype = get_mpi_datatype<T>();
+    MPI_Datatype datatype = get_mpi_datatype<T>();
 
     MPI_Put(origin_addr, 
             count, 
