@@ -58,6 +58,24 @@ class Window {
             win);
   }
 
+  template <typename T>
+  void get(const T* origin_addr, 
+            int count, 
+            int source_rank, 
+            MPI_Aint source_disp) {
+
+    MPI_Datatype datatype = get_mpi_datatype<T>();
+
+    MPI_Get(origin_addr, 
+            count, 
+            datatype, 
+            source_rank, 
+            source_disp, 
+            count, 
+            datatype, 
+            win);
+  }
+
  private:
   ViewType v_;
   MPI_Comm comm_;
