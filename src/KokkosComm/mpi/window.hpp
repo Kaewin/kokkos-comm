@@ -36,7 +36,8 @@ class Window {
 
   ~Window() { MPI_Win_free(&win); }
 
-  MPI_Win getWin() const { return win; }
+  // Not needed anymore
+  // MPI_Win getWin() const { return win; }
 
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
