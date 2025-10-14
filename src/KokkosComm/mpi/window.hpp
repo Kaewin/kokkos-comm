@@ -41,7 +41,10 @@ class Window {
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
   template <typename T>
-  void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
+  void put(const T* origin_addr, 
+            int count, 
+            int target_rank, 
+            MPI_Aint target_disp) {
 
     MPI_Datatype datatype = get_mpi_datatype<T>();
 

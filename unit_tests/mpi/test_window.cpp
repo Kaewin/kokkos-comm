@@ -97,13 +97,19 @@ Old code:
     if (rank == 0) {
         Scalar value = static_cast<Scalar>(99);
 
-        // Determine MPI datatype
-        MPI_Datatype mpi_type = MPI_BYTE;
-        if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
-        if (std::is_same<Scalar, float>::value) mpi_type = MPI_FLOAT;
-        if (std::is_same<Scalar, int>::value) mpi_type = MPI_INT;
+        // NOT NEEDED ANYMORE:
 
-        MPI_Put(&value, 1, mpi_type, 1, 0, 1, mpi_type, window.getWin());
+        // Determine MPI datatype
+        // MPI_Datatype mpi_type = MPI_BYTE;
+        // if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
+        // if (std::is_same<Scalar, float>::value) mpi_type = MPI_FLOAT;
+        // if (std::is_same<Scalar, int>::value) mpi_type = MPI_INT;
+
+        // Old code:
+        // MPI_Put(&value, 1, mpi_type, 1, 0, 1, mpi_type, window.getWin());
+
+        // New code - calling class function
+        window.put(&value, 1, 1, 0);
     }
 
     // Sync again
@@ -145,7 +151,9 @@ TEST(WindowTest, BasicPut) {
     // Rank 0 puts value 42 to rank 1
     if (rank == 0) {
         double value = 42.0;
-        MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.getWin());
+        // New function
+        // MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.getWin());
+        window.put(&value, 1, 1, 0);
     }
     
     // Synchronize
