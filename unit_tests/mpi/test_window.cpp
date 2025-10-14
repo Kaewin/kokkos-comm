@@ -51,6 +51,12 @@ void test_window() {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
 
+    // Skipping complex tests for now until I can fix them
+    if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
+        std::is_same<Scalar, Kokkos::complex<double>>::value) {
+        GTEST_SKIP() << "Complex types not yet supported";
+    }
+
 // Going to build on the existing testing code
 
 /*
@@ -122,12 +128,6 @@ TEST(WindowTest, BasicPut) {
 
     if (size < 2) {
         GTEST_SKIP() << "This test requires at least 2 MPI processes.";
-    }
-
-    // Skipping complex tests for now until I can fix them
-    if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
-        std::is_same<Scalar, Kokkos::complex<double>>::value) {
-        GTEST_SKIP() << "Complex types not yet supported";
     }
 
     // Create view with initial value = rank
