@@ -66,7 +66,7 @@ class Window {
   // Helper function to set the datatype for put and get
   template <typename T>
   MPI_Datatype get_mpi_datatype() {
-    if (std::is_same<T, int>::vaue) {
+    if (std::is_same<T, int>::value) {
       return MPI_INT;
     } else if (std::is_same<T, int64_t>::value) {
       return MPI_LONG_LONG;
