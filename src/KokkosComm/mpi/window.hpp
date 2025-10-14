@@ -72,7 +72,7 @@ class Window {
     } else if (std::is_same<T, double>::value) {
       return MPI_DOUBLE;
     } else {
-      return MPI_BYTE
+      return MPI_BYTE;
     }
   }
 };
