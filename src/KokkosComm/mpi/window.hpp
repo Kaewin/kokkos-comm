@@ -40,10 +40,41 @@ class Window {
 
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
+  template <typename T>
+  void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
+
+    MPI_Datatype = datatype = get_mpi_datatype<T>();
+
+    MPI_Put(origin_addr, 
+            count, 
+            datatype, 
+            target_rank, 
+            target_disp, 
+            count, 
+            datatype, 
+            win);
+  }
+
  private:
   ViewType v_;
   MPI_Comm comm_;
   MPI_Win win;
+
+  // Helper function to set the datatype for put and get
+  template <typename T>
+  MPI_Datatype get_mpi_datatype() {
+    if (std::is_same<t, int>::vaue) {
+      return MPI_INT;
+    } else if (std::is_same<T, int64_t>::value) {
+      return MPI_LONG_LONG;
+    } else if (std::is_same<T, float>::value) {
+      return MPI_FLOAT;
+    } else if (std::is_same<T, double>::value) {
+      return MPI_DOUBLE;
+    } else {
+      return MPI_BYTE
+    }
+  }
 };
 
 }  // namespace KokkosComm
