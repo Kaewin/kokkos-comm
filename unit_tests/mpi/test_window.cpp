@@ -132,7 +132,9 @@ TEST(WindowTest, BasicPut) {
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
     
     // Synchronize
-    MPI_Win_fence(0, window.getWin());
+    // MPI_Win_fence(0, window.getWin());
+    // Using new function:
+    data.fence();
     
     // Rank 0 puts value 42 to rank 1
     if (rank == 0) {
@@ -141,8 +143,10 @@ TEST(WindowTest, BasicPut) {
     }
     
     // Synchronize
-    MPI_Win_fence(0, window.getWin());
-    
+    // MPI_Win_fence(0, window.getWin());
+    // Using new function:
+    data.fence();
+   
     // Check result
     if (rank == 1) {
         EXPECT_EQ(data(0), 42.0);
