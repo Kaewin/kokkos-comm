@@ -38,6 +38,8 @@ class Window {
 
   MPI_Win getWin() const { return win; }
 
+  void fence (int assert = 0) { MPI_Win_fence(assert, win); }
+
  private:
   ViewType v_;
   MPI_Comm comm_;

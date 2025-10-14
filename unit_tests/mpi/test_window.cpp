@@ -81,7 +81,11 @@ Old code:
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
 
     // Sync
-    MPI_Win_fence(0, window.getWin());
+    // Old code - calling fence directly
+    // MPI_Win_fence(0, window.getWin());
+
+    // New code - calling class function
+    window.fence();
 
     // Rank 0 puts value 99 to rank 1
     if (rank == 0) {
@@ -97,7 +101,9 @@ Old code:
     }
 
     // Sync again
-    MPI_Win_fence(0, window.getWin());
+    // MPI_Win_fence(0, window.getWin());
+    // Calling new class function here too
+    window.fence();
 
     // Check results
     if (rank == 1) {
@@ -141,8 +147,5 @@ TEST(WindowTest, BasicPut) {
     if (rank == 1) {
         EXPECT_EQ(data(0), 42.0);
     }
-
 }
-
-
 }  // namespace
