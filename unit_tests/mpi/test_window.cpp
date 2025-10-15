@@ -51,11 +51,11 @@ void test_window() {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
 
-    // Skipping complex tests for now until I can fix them
-    if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
-        std::is_same<Scalar, Kokkos::complex<double>>::value) {
-        GTEST_SKIP() << "Complex types not yet supported";
-    }
+// Skipping complex tests for now until I can fix them
+if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
+    std::is_same<Scalar, Kokkos::complex<double>>::value) {
+    GTEST_SKIP() << "Complex types not yet supported";
+}
 
 // Going to build on the existing testing code
 
@@ -164,6 +164,39 @@ TEST(WindowTest, BasicPut) {
     // Check result
     if (rank == 1) {
         EXPECT_EQ(data(0), 42.0);
+    }
+}
+// Begin new test:
+TEST(WindowTest, BasicGet) {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if (size < 2) {
+        GTEST_SKIP() << "This test requires at least 2 MPI processes.";
+    }
+
+    Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
+    data(0) = rank;
+    
+    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+    
+    window.fence();
+
+    if (rank == 0) {
+        data(0) = 77.0;
+    }
+    if (rank == 1) {
+        window.get(&data(0), 1, 0, 0);
+    }
+    
+    window.fence();
+
+    if (rank == 0) {
+        EXPECT_EQ(data(0), 77.0);
+    }
+    if (rank == 1) {
+        EXPECT_EQ(data(0), 77.0);
     }
 }
 }  // namespace

@@ -60,7 +60,7 @@ class Window {
   }
 
   template <typename T>
-  void get(const T* origin_addr, 
+  void get(T* origin_addr, 
             int count, 
             int source_rank, 
             MPI_Aint source_disp) {
