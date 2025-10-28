@@ -35,12 +35,6 @@ class WindowTest : public testing::Test {
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(WindowTest, ScalarTypes);
 
-
-// Main typed test
-// Window class can create MPI windows from Kokkos Views
-// getWin() method gives access to window handle
-// MPI_Put writes to remote memory through the window
-// Tests with different data types
 template <typename Scalar>
 void test_window() {
   int rank, size;
@@ -57,27 +51,6 @@ if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
     GTEST_SKIP() << "Complex types not yet supported";
 }
 
-// Going to build on the existing testing code
-
-/*
-Old code:
-*/
-
-//   const int N = 10;
-
-//   // Create host view
-//   Kokkos::View<Scalar*, Kokkos::HostSpace> recv_host("recv_host", N);
-//   // Create device views
-//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> send_dev("send_dev", N);
-//   Kokkos::View<Scalar*, Kokkos::DefaultExecutionSpace> recv_dev("recv_dev", N);
-//   // Create Window
-//   KokkosComm::Window<Kokkos::View<Scalar*>> window(send_dev, MPI_COMM_WORLD);
-
-//   int errs = 0;
-//   EXPECT_EQ(errs, 0);
-
-
-
 	// One-element view, like below
     Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
     // Initialize each process's data to it's own rank number
@@ -86,35 +59,14 @@ Old code:
     // Create window
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
 
-    // Sync
-    // Old code - calling fence directly
-    // MPI_Win_fence(0, window.getWin());
-
-    // New code - calling class function
     window.fence();
 
     // Rank 0 puts value 99 to rank 1
     if (rank == 0) {
         Scalar value = static_cast<Scalar>(99);
-
-        // NOT NEEDED ANYMORE:
-
-        // Determine MPI datatype
-        // MPI_Datatype mpi_type = MPI_BYTE;
-        // if (std::is_same<Scalar, double>::value) mpi_type = MPI_DOUBLE;
-        // if (std::is_same<Scalar, float>::value) mpi_type = MPI_FLOAT;
-        // if (std::is_same<Scalar, int>::value) mpi_type = MPI_INT;
-
-        // Old code:
-        // MPI_Put(&value, 1, mpi_type, 1, 0, 1, mpi_type, window.getWin());
-
-        // New code - calling class function
         window.put(&value, 1, 1, 0);
     }
 
-    // Sync again
-    // MPI_Win_fence(0, window.getWin());
-    // Calling new class function here too
     window.fence();
 
     // Check results
@@ -143,22 +95,14 @@ TEST(WindowTest, BasicPut) {
     // Create window
     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
     
-    // Synchronize
-    // MPI_Win_fence(0, window.getWin());
-    // Using new function:
     window.fence();
     
     // Rank 0 puts value 42 to rank 1
     if (rank == 0) {
         double value = 42.0;
-        // New function
-        // MPI_Put(&value, 1, MPI_DOUBLE, 1, 0, 1, MPI_DOUBLE, window.getWin());
         window.put(&value, 1, 1, 0);
     }
     
-    // Synchronize
-    // MPI_Win_fence(0, window.getWin());
-    // Using new function:
     window.fence();
    
     // Check result
