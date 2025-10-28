@@ -55,6 +55,15 @@ class Window {
     MPI_Get(origin_addr, count, datatype, source_rank, source_disp, count, datatype, win);
   }
 
+  void lock(LockType type, int rank, int assert = 0) {
+    int mpi_lock_type = (type == LockType::Exclusive) 
+                        ? MPI_LOCK_EXCLUSIVE 
+                        : MPI_LOCK_SHARED;
+    MPI_Win_lock(mpi_lock_type, rank, assert, win);
+  }
+
+  void unlock(int rank) { MPI_Win_unlock(rank, win); }
+
  private:
   ViewType v_;
   MPI_Comm comm_;
