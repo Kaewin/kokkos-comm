@@ -29,6 +29,9 @@ namespace KokkosComm {
 template <typename ViewType, typename CommSpace = DefaultCommunicationSpace>
 class Window {
  public:
+
+  enum class LockType { Shared, Exclusive };
+
   explicit Window(ViewType v, MPI_Comm comm) : v_(v), comm_(comm) {
     MPI_Win_create(v_.data(), v_.span() * sizeof(typename ViewType::value_type), sizeof(typename ViewType::value_type),
                    MPI_INFO_NULL, comm_, &win);
