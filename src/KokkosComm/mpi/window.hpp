@@ -36,45 +36,20 @@ class Window {
 
   ~Window() { MPI_Win_free(&win); }
 
-  // Not needed anymore
-  // MPI_Win getWin() const { return win; }
-
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
   template <typename T>
-  void put(const T* origin_addr, 
-            int count, 
-            int target_rank, 
-            MPI_Aint target_disp) {
-
+  void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
     MPI_Datatype datatype = get_mpi_datatype<T>();
 
-    MPI_Put(origin_addr, 
-            count, 
-            datatype, 
-            target_rank, 
-            target_disp, 
-            count, 
-            datatype, 
-            win);
+    MPI_Put(origin_addr, count, datatype, target_rank, target_disp, count, datatype, win);
   }
 
   template <typename T>
-  void get(T* origin_addr, 
-            int count, 
-            int source_rank, 
-            MPI_Aint source_disp) {
-
+  void get(T* origin_addr, int count, int source_rank, MPI_Aint source_disp) {
     MPI_Datatype datatype = get_mpi_datatype<T>();
 
-    MPI_Get(origin_addr, 
-            count, 
-            datatype, 
-            source_rank, 
-            source_disp, 
-            count, 
-            datatype, 
-            win);
+    MPI_Get(origin_addr, count, datatype, source_rank, source_disp, count, datatype, win);
   }
 
  private:
