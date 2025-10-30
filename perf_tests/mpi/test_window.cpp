@@ -24,39 +24,36 @@ using Scalar = double;
 // ============================================================================
 
 template <typename Space, typename View>
-void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v) {
-  KokkosComm::Window<View> window(v, comm);
-  
+void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v,
+                     KokkosComm::Window<View> &window) {
   if (rank == 0) {
     window.lock(KokkosComm::Window<View>::LockType::Exclusive, 1);
     window.put(v.data(), v.size(), 1, 0);
     window.unlock(1);
   }
-  
+
   MPI_Barrier(comm);
 }
 
 template <typename Space, typename View>
-void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &space, int rank, int size, const View &v) {
+void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &space, int rank, int size, const View &v,
+                            KokkosComm::Window<View> &window) {
   if (size < 3) {
     return; // Skip if not enough processes
   }
-  
-  KokkosComm::Window<View> window(v, comm);
-  
+
   if (rank == 0 || rank == 1) {
     window.lock(KokkosComm::Window<View>::LockType::Shared, 2);
     window.get(v.data(), v.size(), 2, 0);
     window.unlock(2);
   }
-  
+
   MPI_Barrier(comm);
 }
 
 template <typename Space, typename View>
-void fence_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v) {
-  KokkosComm::Window<View> window(v, comm);
-  
+void fence_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v,
+               KokkosComm::Window<View> &window) {
   window.fence();
   if (rank == 0) {
     window.put(v.data(), v.size(), 1, 0);
@@ -81,29 +78,32 @@ void benchmark_lock_unlock_put(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
+
   if (size < 2) {
     state.SkipWithError("benchmark_lock_unlock_put needs at least 2 ranks");
     return;
   }
-  
+
   auto space = Kokkos::DefaultExecutionSpace();
   using view_type = Kokkos::View<Scalar *>;
-  
+
   const int n = state.range(0);
   view_type v("data", n);
-  
+
   // Initialize data
   Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
     v(i) = static_cast<Scalar>(i);
   });
   Kokkos::fence();
-  
+
+  // Create window once before benchmark loop
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+
   while (state.KeepRunning()) {
-    do_iteration(state, MPI_COMM_WORLD, lock_unlock_put<Kokkos::DefaultExecutionSpace, view_type>, 
-                 space, rank, v);
+    do_iteration(state, MPI_COMM_WORLD, lock_unlock_put<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, window);
   }
-  
+
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
@@ -111,29 +111,32 @@ void benchmark_lock_unlock_shared_get(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
+
   if (size < 3) {
     state.SkipWithError("benchmark_lock_unlock_shared_get needs at least 3 ranks");
     return;
   }
-  
+
   auto space = Kokkos::DefaultExecutionSpace();
   using view_type = Kokkos::View<Scalar *>;
-  
+
   const int n = state.range(0);
   view_type v("data", n);
-  
+
   // Initialize data
   Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
     v(i) = static_cast<Scalar>(i);
   });
   Kokkos::fence();
-  
+
+  // Create window once before benchmark loop
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+
   while (state.KeepRunning()) {
-    do_iteration(state, MPI_COMM_WORLD, lock_unlock_shared_get<Kokkos::DefaultExecutionSpace, view_type>, 
-                 space, rank, size, v);
+    do_iteration(state, MPI_COMM_WORLD, lock_unlock_shared_get<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, size, v, window);
   }
-  
+
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
@@ -141,29 +144,32 @@ void benchmark_fence_put(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
+
   if (size < 2) {
     state.SkipWithError("benchmark_fence_put needs at least 2 ranks");
     return;
   }
-  
+
   auto space = Kokkos::DefaultExecutionSpace();
   using view_type = Kokkos::View<Scalar *>;
-  
+
   const int n = state.range(0);
   view_type v("data", n);
-  
+
   // Initialize data
   Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
     v(i) = static_cast<Scalar>(i);
   });
   Kokkos::fence();
-  
+
+  // Create window once before benchmark loop
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+
   while (state.KeepRunning()) {
-    do_iteration(state, MPI_COMM_WORLD, fence_put<Kokkos::DefaultExecutionSpace, view_type>, 
-                 space, rank, v);
+    do_iteration(state, MPI_COMM_WORLD, fence_put<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, window);
   }
-  
+
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
@@ -225,5 +231,3 @@ BENCHMARK(benchmark_sendrecv_comparison)
     ->Range(1, 1<<18)
     ->UseManualTime()
     ->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_MAIN();

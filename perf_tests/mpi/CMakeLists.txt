@@ -23,6 +23,7 @@ target_sources(
     test_channel_sendrecv.cpp
     test_2dhalo.cpp
     test_osu_latency.cpp
+    test_window.cpp
 )
 target_link_libraries(
   perf-test-main
