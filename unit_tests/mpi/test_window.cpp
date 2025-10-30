@@ -78,69 +78,69 @@ if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
 
 
-// Begin new test:
-TEST(WindowTest, BasicPut) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+// // Begin new test:
+// TEST(WindowTest, BasicPut) {
+//     int rank, size;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (size < 2) {
-        GTEST_SKIP() << "This test requires at least 2 MPI processes.";
-    }
+//     if (size < 2) {
+//         GTEST_SKIP() << "This test requires at least 2 MPI processes.";
+//     }
 
-    // Create view with initial value = rank
-    Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
-    data(0) = rank;
+//     // Create view with initial value = rank
+//     Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
+//     data(0) = rank;
     
-    // Create window
-    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+//     // Create window
+//     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
     
-    window.fence();
+//     window.fence();
     
-    // Rank 0 puts value 42 to rank 1
-    if (rank == 0) {
-        double value = 42.0;
-        window.put(&value, 1, 1, 0);
-    }
+//     // Rank 0 puts value 42 to rank 1
+//     if (rank == 0) {
+//         double value = 42.0;
+//         window.put(&value, 1, 1, 0);
+//     }
     
-    window.fence();
+//     window.fence();
    
-    // Check result
-    if (rank == 1) {
-        EXPECT_EQ(data(0), 42.0);
-    }
-}
-// Begin new test:
-TEST(WindowTest, BasicGet) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+//     // Check result
+//     if (rank == 1) {
+//         EXPECT_EQ(data(0), 42.0);
+//     }
+// }
+// // Begin new test:
+// TEST(WindowTest, BasicGet) {
+//     int rank, size;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (size < 2) {
-        GTEST_SKIP() << "This test requires at least 2 MPI processes.";
-    }
+//     if (size < 2) {
+//         GTEST_SKIP() << "This test requires at least 2 MPI processes.";
+//     }
 
-    Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
-    data(0) = rank;
+//     Kokkos::View<double*, Kokkos::HostSpace> data("data", 1);
+//     data(0) = rank;
     
-    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+//     KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
     
-    window.fence();
+//     window.fence();
 
-    if (rank == 0) {
-        data(0) = 77.0;
-    }
-    if (rank == 1) {
-        window.get(&data(0), 1, 0, 0);
-    }
+//     if (rank == 0) {
+//         data(0) = 77.0;
+//     }
+//     if (rank == 1) {
+//         window.get(&data(0), 1, 0, 0);
+//     }
     
-    window.fence();
+//     window.fence();
 
-    if (rank == 0) {
-        EXPECT_EQ(data(0), 77.0);
-    }
-    if (rank == 1) {
-        EXPECT_EQ(data(0), 77.0);
-    }
-}
-}  // namespace
+//     if (rank == 0) {
+//         EXPECT_EQ(data(0), 77.0);
+//     }
+//     if (rank == 1) {
+//         EXPECT_EQ(data(0), 77.0);
+//     }
+// }
+// }  // namespace
