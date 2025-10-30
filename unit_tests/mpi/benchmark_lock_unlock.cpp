@@ -238,28 +238,28 @@ TEST_F(LockUnlockBenchmark, BenchmarkLockUnlockSharedGet) {
 
 }  // namespace
 
-// Custom main function for command-line args
-int main(int argc, char** argv) {
-    MPI_Init(&argc, &argv);
-    Kokkos::initialize(argc, argv);
+// // Custom main function for command-line args
+// int main(int argc, char** argv) {
+//     MPI_Init(&argc, &argv);
+//     Kokkos::initialize(argc, argv);
 
-    // Parse command-line arguments
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "--size" && i + 1 < argc) {
-            MESSAGE_SIZE = std::atoi(argv[i+1]);
-            i++;
-        } else if (arg == "--iterations" && i + 1 < argc) {
-            NUM_ITERATIONS = std::atoi(argv[i+1]);
-            i++;
-        }
-    }
+//     // Parse command-line arguments
+//     for (int i = 1; i < argc; i++) {
+//         std::string arg = argv[i];
+//         if (arg == "--size" && i + 1 < argc) {
+//             MESSAGE_SIZE = std::atoi(argv[i+1]);
+//             i++;
+//         } else if (arg == "--iterations" && i + 1 < argc) {
+//             NUM_ITERATIONS = std::atoi(argv[i+1]);
+//             i++;
+//         }
+//     }
 
-    ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+//     ::testing::InitGoogleTest(&argc, argv);
+//     int result = RUN_ALL_TESTS();
 
-    Kokkos::finalize();
-    MPI_Finalize();
+//     Kokkos::finalize();
+//     MPI_Finalize();
 
-    return result;
-}
+//     return result;
+// }
