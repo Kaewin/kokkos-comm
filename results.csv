@@ -1,0 +1,5 @@
+Message Method,Sum of Time
+FencePut,8.72E-05
+LockUnlockPut,3.17E-05
+LockUnlockSharedGet,4.20E-05
+SendRecv,1.76E-05
