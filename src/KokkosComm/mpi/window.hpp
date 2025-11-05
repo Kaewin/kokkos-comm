@@ -41,6 +41,13 @@ class Window {
 
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
+  /*
+  Function: put
+  -----------------
+  Description:
+    Performs an MPI Put operation to write data from the origin address
+    to the target rank's memory at the specified displacement.
+  */
   template <typename T>
   void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
     MPI_Datatype datatype = get_mpi_datatype<T>();
@@ -48,6 +55,13 @@ class Window {
     MPI_Put(origin_addr, count, datatype, target_rank, target_disp, count, datatype, win);
   }
 
+  /*
+  Function: get
+  -----------------
+  Description:
+    Performs an MPI Get operation to read data from the source rank's memory
+    at the specified displacement into the origin address.
+  */
   template <typename T>
   void get(T* origin_addr, int count, int source_rank, MPI_Aint source_disp) {
     MPI_Datatype datatype = get_mpi_datatype<T>();
@@ -55,6 +69,12 @@ class Window {
     MPI_Get(origin_addr, count, datatype, source_rank, source_disp, count, datatype, win);
   }
 
+  /*
+  Function: lock
+  -----------------
+  Description:
+    Locks the window for RMA operations on the specified rank with the given lock type.
+  */
   void lock(LockType type, int rank, int assert = 0) {
     int mpi_lock_type = (type == LockType::Exclusive) 
                         ? MPI_LOCK_EXCLUSIVE 
@@ -62,7 +82,28 @@ class Window {
     MPI_Win_lock(mpi_lock_type, rank, assert, win);
   }
 
+  /*
+  Function: unlock
+  -----------------
+  Description:
+    Unlocks the window for RMA operations on the specified rank.
+  */
   void unlock(int rank) { MPI_Win_unlock(rank, win); }
+
+  // NEW - NOT TESTED
+  // PSCW Functions:
+  void post(MPI_Group post_group, int assert = 0) {
+      MPI_Win_post(post_group, assert, win);
+  }
+
+  void wait() { MPI_Win_wait(win); }
+
+  void start(MPI_Group start_group, int assert = 0) {
+      MPI_Win_start(start_group, assert, win);
+  }
+
+  void complete() { MPI_Win_complete(win); }
+  // END NEW
 
  private:
   ViewType v_;

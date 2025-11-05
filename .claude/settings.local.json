@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/research1/repos/kokkos-comm/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

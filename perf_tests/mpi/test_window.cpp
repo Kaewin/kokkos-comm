@@ -16,6 +16,7 @@
 
 #include "test_utils.hpp"
 #include <KokkosComm/KokkosComm.hpp>
+#include <functional>
 
 using Scalar = double;
 
@@ -23,46 +24,76 @@ using Scalar = double;
 // Helper Functions for Lock/Unlock Operations
 // ============================================================================
 
+/*
+ * RMA Performance Comparison Benchmarks
+ * 
+ * This file compares 4 communication methods to evaluate Lock/Unlock performance:
+ * 
+ * 1. Lock/Unlock Put (NEW IMPLEMENTATION)
+ *    - Rank 0: Origin (locks rank 1, writes data, unlocks)
+ *    - Rank 1: Target (passive - doesn't participate)
+ *    - Synchronization: Fine-grained (only 2 processes involved)
+ * 
+ * 2. Lock/Unlock Shared Get (NEW IMPLEMENTATION)
+ *    - Rank 0, 1: Origins (both lock rank 2, read data, unlock)
+ *    - Rank 2: Target (passive - doesn't participate)
+ *    - Synchronization: Shared locks allow concurrent reads
+ * 
+ * 3. Fence Put (NEW IMPLEMENTATION)
+ *    - Rank 0: Origin (writes data to rank 1)
+ *    - Rank 1: Target (passive)
+ *    - Synchronization: Collective (ALL processes must synchronize)
+ * 
+ * 4. Send/Recv (TRADITIONAL BASELINE)
+ *    - Rank 0: Sender (actively sends)
+ *    - Rank 1: Receiver (actively receives)
+ *    - Synchronization: Two-sided (both processes participate)
+ */
+
+
+// Write data to rank 1's memory from rank 0 using Lock/Unlock
 template <typename Space, typename View>
-void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v,
+void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
                      KokkosComm::Window<View> &window) {
   if (rank == 0) {
-    window.lock(KokkosComm::Window<View>::LockType::Exclusive, 1);
-    window.put(v.data(), v.size(), 1, 0);
-    window.unlock(1);
+    window.lock(KokkosComm::Window<View>::LockType::Exclusive, 1); // Lock rank 1's memory
+    window.put(v.data(), v.size(), 1, 0); // Write to rank 1
+    window.unlock(1); // Unlock rank 1's memory
   }
 
   MPI_Barrier(comm);
 }
-
+// Ranks 0 and 1 read data from rank 2's memory using Lock/Unlock Shared
 template <typename Space, typename View>
-void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &space, int rank, int size, const View &v,
+void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, int size, const View &v,
                             KokkosComm::Window<View> &window) {
   if (size < 3) {
     return; // Skip if not enough processes
   }
 
   if (rank == 0 || rank == 1) {
-    window.lock(KokkosComm::Window<View>::LockType::Shared, 2);
-    window.get(v.data(), v.size(), 2, 0);
-    window.unlock(2);
+    window.lock(KokkosComm::Window<View>::LockType::Shared, 2); // Both lock rank 2's memory
+    window.get(v.data(), v.size(), 2, 0); // Both read from rank 2
+    window.unlock(2); // Both unlock
   }
 
   MPI_Barrier(comm);
 }
 
+// Simple fence put from rank 0 to rank 1
 template <typename Space, typename View>
-void fence_put(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v,
+void fence_put(benchmark::State &, MPI_Comm, const Space &, int rank, const View &v,
                KokkosComm::Window<View> &window) {
-  window.fence();
+  window.fence(); // All processes sync
   if (rank == 0) {
     window.put(v.data(), v.size(), 1, 0);
   }
-  window.fence();
+  window.fence(); // All processes sync again
 }
 
+// Traditional 2-sided send/recv comparison
 template <typename Space, typename View>
-void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &space, int rank, const View &v) {
+void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v) {
   if (rank == 0) {
     MPI_Send(v.data(), v.size(), MPI_DOUBLE, 1, 0, comm);
   } else if (rank == 1) {
@@ -74,6 +105,11 @@ void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &space, 
 // Benchmark Functions
 // ============================================================================
 
+/* This function: benchmarks Lock/Unlock Put RMA operation between rank 0 and rank 1.
+   Rank 0 locks rank 1's memory, performs a put operation to write data,
+   and then unlocks rank 1's memory. Rank 1 remains passive during this process.
+   The benchmark measures the time taken for these operations over multiple iterations.
+*/
 void benchmark_lock_unlock_put(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -84,11 +120,12 @@ void benchmark_lock_unlock_put(benchmark::State &state) {
     return;
   }
 
-  auto space = Kokkos::DefaultExecutionSpace();
-  using view_type = Kokkos::View<Scalar *>;
+  auto space = Kokkos::DefaultExecutionSpace(); // See test_sendrecv.cpp: 43
+  using view_type = Kokkos::View<Scalar *>; // See test_sendrecv.cpp: 44
 
   const int n = state.range(0);
   view_type v("data", n);
+  // See test_osu_latency.cpp: 69
 
   // Initialize data
   Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
@@ -99,11 +136,12 @@ void benchmark_lock_unlock_put(benchmark::State &state) {
   // Create window once before benchmark loop
   KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
 
-  while (state.KeepRunning()) {
+  while (state.KeepRunning()) { // See test_osu_latency.cpp: 59
     do_iteration(state, MPI_COMM_WORLD, lock_unlock_put<Kokkos::DefaultExecutionSpace, view_type>,
-                 space, rank, v, window);
+                 space, rank, v, std::ref(window));
   }
 
+  // See test_sendrecv.cpp: 51
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
@@ -134,7 +172,7 @@ void benchmark_lock_unlock_shared_get(benchmark::State &state) {
 
   while (state.KeepRunning()) {
     do_iteration(state, MPI_COMM_WORLD, lock_unlock_shared_get<Kokkos::DefaultExecutionSpace, view_type>,
-                 space, rank, size, v, window);
+                 space, rank, size, v, std::ref(window));
   }
 
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
@@ -167,7 +205,7 @@ void benchmark_fence_put(benchmark::State &state) {
 
   while (state.KeepRunning()) {
     do_iteration(state, MPI_COMM_WORLD, fence_put<Kokkos::DefaultExecutionSpace, view_type>,
-                 space, rank, v, window);
+                 space, rank, v, std::ref(window));
   }
 
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);

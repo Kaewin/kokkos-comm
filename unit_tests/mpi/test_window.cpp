@@ -77,6 +77,7 @@ if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
 
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
 
+}  // namespace
 
 // // Begin new test:
 // TEST(WindowTest, BasicPut) {
