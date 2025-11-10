@@ -45,12 +45,6 @@ void test_window() {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
 
-// Skipping complex tests for now until I can fix them
-// if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
-    // std::is_same<Scalar, Kokkos::complex<double>>::value) {
-    // GTEST_SKIP() << "Complex types not yet supported";
-// }
-
 	// One-element view, like below
     Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
     // Initialize each process's data to its own rank number
