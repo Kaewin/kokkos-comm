@@ -45,9 +45,11 @@ class WindowTest : public testing::Test {
   using Scalar = T;
 };
 
+
 // List of types to test - each test will run 6 times, once for each type
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(WindowTest, ScalarTypes);
+
 
 // ============================================================================
 // Test: Basic Put Operation with Fence Synchronization
@@ -67,7 +69,7 @@ TYPED_TEST_SUITE(WindowTest, ScalarTypes);
  * - MPI_Put operation from rank 0 to rank 1
  */
 template <typename Scalar>
-void test_window_put() {
+void test_window() {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -103,6 +105,7 @@ void test_window_put() {
 }
 
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
+
 
 // ============================================================================
 // Test: Basic Get Operation with Fence Synchronization
@@ -152,6 +155,8 @@ void test_window_get() {
   // End RMA access epoch and ensure completion
   window.fence();
 }
+
+TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
 
 // ============================================================================
 // Test: Lock/Unlock Put Operation with Exclusive Lock
@@ -209,6 +214,6 @@ void test_lock_unlock_put() {
   }
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
+TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixture::Scalar>(); }0
 
 }  // namespace
