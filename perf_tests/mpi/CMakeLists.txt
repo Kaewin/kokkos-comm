@@ -33,5 +33,5 @@ target_link_libraries(
 add_test(
   NAME perf-test-main
   COMMAND
-    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ./perf-test-main
+    ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 3 ./perf-test-main
 )

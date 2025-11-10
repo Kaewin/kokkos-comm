@@ -69,7 +69,7 @@ TYPED_TEST_SUITE(WindowTest, ScalarTypes);
  * - MPI_Put operation from rank 0 to rank 1
  */
 template <typename Scalar>
-void test_window() {
+void test_window_put() {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -104,7 +104,7 @@ void test_window() {
   }
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
+TYPED_TEST(WindowTest, 1D_contig_window) { test_window_put<typename TestFixture::Scalar>(); }
 
 
 // ============================================================================
@@ -214,6 +214,58 @@ void test_lock_unlock_put() {
   }
 }
 
-TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixture::Scalar>(); }0
+TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixture::Scalar>(); }
+
+
+// ============================================================================
+// Test: Shared Lock with Concurrent Gets
+// ============================================================================
+
+/*
+ * Test: Shared Lock with Concurrent Get Operations
+ *
+ * Pattern: Lock (Shared) -> Get -> Unlock (concurrent from multiple origins)
+ * - Rank 0: Origin (locks rank 2 with shared lock, reads data)
+ * - Rank 1: Origin (locks rank 2 with shared lock, reads data)
+ * - Rank 2: Target (passive - provides data to both origins)
+ * - Synchronization: Shared locks allow concurrent read access
+ *
+ * This test validates:
+ * - MPI_Win_lock with shared (non-exclusive) access
+ * - Multiple processes can hold shared locks simultaneously
+ * - Concurrent get operations from different origins to same target
+ */
+template <typename Scalar>
+void test_window_shared_lock() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 3) {
+    GTEST_SKIP() << "This test requires at least 3 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank * 1000);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Ranks 0 and 1 both get from rank 2 using shared locks
+  if (rank == 0 || rank == 1) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Shared, 2);
+    Scalar received;
+    window.get(&received, 1, 2, 0);
+    window.unlock(2);
+    // Both should get rank 2's value (2000)
+    EXPECT_EQ(received, static_cast<Scalar>(2000));
+  }
+
+  // Barrier ensures all operations complete
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TYPED_TEST(WindowTest, shared_lock_concurrent_get) { test_window_shared_lock<typename TestFixture::Scalar>(); }
 
 }  // namespace
