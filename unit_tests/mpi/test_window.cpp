@@ -153,6 +153,62 @@ void test_window_get() {
   window.fence();
 }
 
+// ============================================================================
+// Test: Lock/Unlock Put Operation with Exclusive Lock
+// ============================================================================
+
+/*
+ * Test: Lock/Unlock Put with Exclusive Lock
+ *
+ * Pattern: Lock (Exclusive) -> Put -> Unlock
+ * - Rank 0: Origin (locks rank 1, writes value 42, unlocks)
+ * - Rank 1: Target (passive - doesn't participate in synchronization)
+ * - Synchronization: Fine-grained (only 2 processes involved, no collective)
+ *
+ * This test validates:
+ * - MPI_Win_lock with exclusive access
+ * - MPI_Put operation within lock/unlock epoch
+ * - MPI_Win_unlock ensuring operation completion
+ */
+template <typename Scalar>
+void test_lock_unlock_put() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+
+  // Initialize each process's data to its own rank number
+  data(0) = static_cast<Scalar>(rank);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Rank 0 locks rank 1's window exclusively
+  if (rank == 0) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive,
+                1); // Lock rank 1
+    // Put value 42 into rank 1's window
+    Scalar value = static_cast<Scalar>(42);
+    window.put(&value, 1, 1, 0);
+    // Unlock rank 1's window, ensuring completion
+    window.unlock(1);
+  }
+
+  // Synchronize all processes to ensure rank 1 can check its data
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Verify that rank 1 received the value
+  if (rank == 1) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(42));
+  }
+}
+
 TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
 
 }  // namespace
