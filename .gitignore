@@ -6,3 +6,8 @@ kokkos
 docs/_build
 .python-version
 .venv
+.claude
+.github
+.gitignore
+.ipynb_checkpoints
+__pycache__
