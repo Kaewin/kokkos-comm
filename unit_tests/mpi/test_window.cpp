@@ -218,6 +218,57 @@ TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixtur
 
 
 // ============================================================================
+// Test: Lock/Unlock Get Operation with Exclusive Lock
+// ============================================================================
+
+/*
+ * Test: Lock/Unlock Get with Exclusive Lock
+ *
+ * Pattern: Lock (Exclusive) -> Get -> Unlock
+ * - Rank 0: Target (passive - provides data)
+ * - Rank 1: Origin (locks rank 0, reads value, unlocks)
+ * - Synchronization: Fine-grained (only 2 processes involved, no collective)
+ *
+ * This test validates:
+ * - MPI_Win_lock with exclusive access
+ * - MPI_Get operation within lock/unlock epoch
+ * - Correct data retrieval from remote rank's window
+ */
+template <typename Scalar>
+void test_lock_unlock_get() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank * 10);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Rank 1 locks rank 0's window, gets value, then unlocks
+  if (rank == 1) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive, 0);
+    Scalar received;
+    window.get(&received, 1, 0, 0);
+    window.unlock(0);
+    // Verify we got rank 0's value (which is 0)
+    EXPECT_EQ(received, static_cast<Scalar>(0));
+  }
+
+  // Barrier ensures rank 1's operations complete
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TYPED_TEST(WindowTest, LockUnlockGet) { test_lock_unlock_get<typename TestFixture::Scalar>(); }
+
+
+// ============================================================================
 // Test: Shared Lock with Concurrent Gets
 // ============================================================================
 
