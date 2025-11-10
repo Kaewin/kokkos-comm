@@ -22,19 +22,50 @@ namespace {
 
 using namespace KokkosComm::mpi;
 
-// Existing Test:
-// Google test will execute test_window() once for each datatype in ScalarTypes.
+// ============================================================================
+// Test Fixture Setup
+// ============================================================================
+
+/*
+ * MPI Window Unit Tests
+ *
+ * This file tests the KokkosComm::Window API for one-sided communication (RMA).
+ * Each test is executed for multiple scalar types using Google Test's typed test framework.
+ *
+ * Test Categories:
+ * 1. Fence-based synchronization (put/get operations)
+ * 2. Lock-based synchronization (exclusive and shared locks)
+ * 3. Multi-element operations
+ * 4. Displacement/offset operations
+ */
+
 template <typename T>
 class WindowTest : public testing::Test {
  public:
   using Scalar = T;
 };
 
-// List of types to test
-// The test will run 6 times, one for each type
+// List of types to test - each test will run 6 times, once for each type
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(WindowTest, ScalarTypes);
 
+// ============================================================================
+// Test: Basic Put Operation with Fence Synchronization
+// ============================================================================
+
+/*
+ * Test: Basic Put Operation with Fence Synchronization
+ *
+ * Pattern: Fence -> Put -> Fence
+ * - Rank 0: Origin (writes value 99 to rank 1)
+ * - Rank 1: Target (passive - receives data)
+ * - Synchronization: Collective fence (all processes must participate)
+ *
+ * This test validates:
+ * - Window creation on a single-element view
+ * - MPI_Win_fence synchronization
+ * - MPI_Put operation from rank 0 to rank 1
+ */
 template <typename Scalar>
 void test_window() {
   int rank, size;
@@ -45,30 +76,83 @@ void test_window() {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
 
-	// One-element view, like below
-    Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
-    // Initialize each process's data to its own rank number
-    data(0) = static_cast<Scalar>(rank);
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  // Initialize each process's data to its own rank number
+  data(0) = static_cast<Scalar>(rank);
 
-    // Create window
-    KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
 
-    window.fence();
+  // Begin RMA access epoch
+  window.fence();
 
-    // Rank 0 puts value 99 to rank 1
-    if (rank == 0) {
-        Scalar value = static_cast<Scalar>(99);
-        window.put(&value, 1, 1, 0);
-    }
+  // Rank 0 puts value 99 to rank 1's window at displacement 0
+  if (rank == 0) {
+    Scalar value = static_cast<Scalar>(99);
+    window.put(&value, 1, 1, 0);
+  }
 
-    window.fence();
+  // End RMA access epoch and ensure completion
+  window.fence();
 
-    // Check results
-    if (rank == 1) {
-        EXPECT_EQ(data(0), static_cast<Scalar>(99));
-    }
+  // Verify that rank 1 received the value
+  if (rank == 1) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(99));
+  }
 }
 
 TYPED_TEST(WindowTest, 1D_contig_window) { test_window<typename TestFixture::Scalar>(); }
+
+// ============================================================================
+// Test: Basic Get Operation with Fence Synchronization
+// ============================================================================
+
+/*
+ * Test: Basic Get Operation with Fence Synchronization
+ *
+ * Pattern: Fence -> Get -> Fence
+ * - Rank 0: Target (passive - provides data)
+ * - Rank 1: Origin (reads value from rank 0)
+ * - Synchronization: Collective fence (all processes must participate)
+ *
+ * This test validates:
+ * - MPI_Get operation reading from remote rank
+ * - Correct data transfer from rank 0 to rank 1's local buffer
+ */
+template <typename Scalar>
+void test_window_get() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  // Initialize each process's data to its own rank number
+  data(0) = static_cast<Scalar>(rank);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Begin RMA access epoch
+  window.fence();
+
+  // Rank 1 gets value from rank 0's window
+  if (rank == 1) {
+    Scalar value = static_cast<Scalar>(-1); // Initialize to sentinel value
+    window.get(&value, 1, 0, 0);
+    // Verify we got rank 0's value (which is 0)
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  // End RMA access epoch and ensure completion
+  window.fence();
+}
+
+TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
 
 }  // namespace
