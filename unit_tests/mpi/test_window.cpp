@@ -67,7 +67,7 @@ TYPED_TEST_SUITE(WindowTest, ScalarTypes);
  * - MPI_Put operation from rank 0 to rank 1
  */
 template <typename Scalar>
-void test_window() {
+void test_window_put() {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
