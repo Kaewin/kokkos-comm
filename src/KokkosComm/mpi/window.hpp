@@ -121,6 +121,10 @@ class Window {
       return MPI_FLOAT;
     } else if (std::is_same<T, double>::value) {
       return MPI_DOUBLE;
+    } else if (std::is_same<T, Kokkos::complex<float>>::value) {
+      return MPI_C_FLOAT_COMPLEX;
+    } else if (std::is_same<T, Kokkos::complex<double>>::value) {
+      return MPI_C_DOUBLE_COMPLEX;
     } else {
       return MPI_BYTE;
     }

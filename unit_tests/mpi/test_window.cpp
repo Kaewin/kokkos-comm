@@ -46,14 +46,14 @@ void test_window() {
   }
 
 // Skipping complex tests for now until I can fix them
-if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
-    std::is_same<Scalar, Kokkos::complex<double>>::value) {
-    GTEST_SKIP() << "Complex types not yet supported";
-}
+// if (std::is_same<Scalar, Kokkos::complex<float>>::value ||
+    // std::is_same<Scalar, Kokkos::complex<double>>::value) {
+    // GTEST_SKIP() << "Complex types not yet supported";
+// }
 
 	// One-element view, like below
     Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
-    // Initialize each process's data to it's own rank number
+    // Initialize each process's data to its own rank number
     data(0) = static_cast<Scalar>(rank);
 
     // Create window
