@@ -90,20 +90,42 @@ class Window {
   */
   void unlock(int rank) { MPI_Win_unlock(rank, win); }
 
-  // NEW - NOT TESTED
   // PSCW Functions:
+  /* 
+  Function: post
+  -----------------
+  Description:
+    Posts an exposure epoch for the window using the specified group of ranks.
+  */
   void post(MPI_Group post_group, int assert = 0) {
       MPI_Win_post(post_group, assert, win);
   }
 
+  /*
+  Function: wait
+  -----------------
+  Description:
+    Waits for the completion of the exposure epoch for the window.
+  */
   void wait() { MPI_Win_wait(win); }
 
+  /*
+  Function: start
+  -----------------
+  Description:
+    Starts an access epoch for the window using the specified group of ranks.
+  */
   void start(MPI_Group start_group, int assert = 0) {
       MPI_Win_start(start_group, assert, win);
   }
 
+  /*
+  Function: complete
+  -----------------
+  Description:
+    Completes the access epoch for the window.
+  */
   void complete() { MPI_Win_complete(win); }
-  // END NEW
 
  private:
   ViewType v_;

@@ -25,7 +25,7 @@ using namespace KokkosComm::mpi;
 // ============================================================================
 // Test Fixture Setup
 // ============================================================================
-
+// TODO: REWRITE THIS
 /*
  * MPI Window Unit Tests
  *
@@ -62,11 +62,6 @@ TYPED_TEST_SUITE(WindowTest, ScalarTypes);
  * - Rank 0: Origin (writes value 99 to rank 1)
  * - Rank 1: Target (passive - receives data)
  * - Synchronization: Collective fence (all processes must participate)
- *
- * This test validates:
- * - Window creation on a single-element view
- * - MPI_Win_fence synchronization
- * - MPI_Put operation from rank 0 to rank 1
  */
 template <typename Scalar>
 void test_window_put() {
@@ -118,10 +113,6 @@ TYPED_TEST(WindowTest, 1D_contig_window) { test_window_put<typename TestFixture:
  * - Rank 0: Target (passive - provides data)
  * - Rank 1: Origin (reads value from rank 0)
  * - Synchronization: Collective fence (all processes must participate)
- *
- * This test validates:
- * - MPI_Get operation reading from remote rank
- * - Correct data transfer from rank 0 to rank 1's local buffer
  */
 template <typename Scalar>
 void test_window_get() {
@@ -169,11 +160,6 @@ TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixt
  * - Rank 0: Origin (locks rank 1, writes value 42, unlocks)
  * - Rank 1: Target (passive - doesn't participate in synchronization)
  * - Synchronization: Fine-grained (only 2 processes involved, no collective)
- *
- * This test validates:
- * - MPI_Win_lock with exclusive access
- * - MPI_Put operation within lock/unlock epoch
- * - MPI_Win_unlock ensuring operation completion
  */
 template <typename Scalar>
 void test_lock_unlock_put() {
@@ -383,5 +369,83 @@ void test_multi_element_lock_put() {
 }
 
 TYPED_TEST(WindowTest, MultiElementLockPut) { test_multi_element_lock_put<typename TestFixture::Scalar>(); }
+
+
+// ============================================================================
+// Test: PSCW Synchronization (Post-Start-Complete-Wait)
+// ============================================================================
+
+/*
+ * Test: PSCW Synchronization Pattern
+ *
+ * Pattern: Post/Start -> Put -> Complete/Wait
+ * - Rank 1: Target (posts window to expose memory to rank 0, then waits)
+ * - Rank 0: Origin (starts access epoch, writes to rank 1, then completes)
+ * - Synchronization: Explicit exposure/access epochs (alternative to fence/lock)
+ *
+ * This test validates:
+ * - MPI_Win_post/wait on target side
+ * - MPI_Win_start/complete on origin side
+ * - MPI_Put operation within PSCW epoch
+ */
+template <typename Scalar>
+void test_pscw_put() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Create MPI groups for PSCW synchronization
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+  // Rank 0 is origin, rank 1 is target
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  if (rank == 1) {
+    // Target: Post window to allow rank 0 to access it
+    window.post(origin_group);
+  }
+
+  if (rank == 0) {
+    // Origin: Start access epoch to rank 1's window
+    window.start(target_group);
+    
+    // Put value 77 to rank 1
+    Scalar value = static_cast<Scalar>(77);
+    window.put(&value, 1, 1, 0);
+    
+    // Complete access epoch
+    window.complete();
+  }
+
+  if (rank == 1) {
+    // Target: Wait for all origins to complete their accesses
+    window.wait();
+    
+    // Verify we received the value
+    EXPECT_EQ(data(0), static_cast<Scalar>(77));
+  }
+
+  // Clean up groups
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+}
+
+TYPED_TEST(WindowTest, PSCWPut) { test_pscw_put<typename TestFixture::Scalar>(); }
 
 }  // namespace
