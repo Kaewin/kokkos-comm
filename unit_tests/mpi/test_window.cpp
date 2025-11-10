@@ -319,4 +319,69 @@ void test_window_shared_lock() {
 
 TYPED_TEST(WindowTest, shared_lock_concurrent_get) { test_window_shared_lock<typename TestFixture::Scalar>(); }
 
+
+// ============================================================================
+// Test: Multi-Element Put with Lock/Unlock
+// ============================================================================
+
+/*
+ * Test: Multi-Element Array Put with Exclusive Lock
+ *
+ * Pattern: Lock (Exclusive) -> Put (array) -> Unlock
+ * - Rank 0: Origin (locks rank 1, writes 10-element array, unlocks)
+ * - Rank 1: Target (passive - receives array)
+ * - Synchronization: Fine-grained with exclusive lock
+ *
+ * This test validates:
+ * - MPI_Put with count > 1 within lock/unlock epoch
+ * - Correct transfer of array data using passive target synchronization
+ * - Lock/unlock ensuring multi-element operation completion
+ */
+template <typename Scalar>
+void test_multi_element_lock_put() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  const int n = 10;
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", n);
+
+  // Initialize with rank-specific pattern
+  for (int i = 0; i < n; ++i) {
+    data(i) = static_cast<Scalar>(rank * 100 + i);
+  }
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Rank 0 locks rank 1, puts array, then unlocks
+  if (rank == 0) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive, 1);
+    
+    Kokkos::View<Scalar*, Kokkos::HostSpace> send_data("send", n);
+    for (int i = 0; i < n; ++i) {
+      send_data(i) = static_cast<Scalar>(i + 1000);
+    }
+    window.put(send_data.data(), n, 1, 0);
+    
+    window.unlock(1);
+  }
+
+  // Barrier ensures rank 0's operations complete before rank 1 checks
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  // Verify all elements were received correctly
+  if (rank == 1) {
+    for (int i = 0; i < n; ++i) {
+      EXPECT_EQ(data(i), static_cast<Scalar>(i + 1000));
+    }
+  }
+}
+
+TYPED_TEST(WindowTest, MultiElementLockPut) { test_multi_element_lock_put<typename TestFixture::Scalar>(); }
+
 }  // namespace
