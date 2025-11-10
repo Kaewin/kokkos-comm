@@ -1,3 +1,11 @@
 .claude
 .gitignore
 build
+_deps
+build
+Testing
+.vscode
+kokkos
+docs/_build
+.python-version
+.venv
