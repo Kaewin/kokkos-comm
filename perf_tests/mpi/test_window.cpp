@@ -162,11 +162,6 @@ void pscw_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
 // Benchmark Functions
 // ============================================================================
 
-/* This function: benchmarks Lock/Unlock Put RMA operation between rank 0 and rank 1.
-   Rank 0 locks rank 1's memory, performs a put operation to write data,
-   and then unlocks rank 1's memory. Rank 1 remains passive during this process.
-   The benchmark measures the time taken for these operations over multiple iterations.
-*/
 void benchmark_lock_unlock_put(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

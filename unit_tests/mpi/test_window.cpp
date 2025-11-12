@@ -25,7 +25,6 @@ using namespace KokkosComm::mpi;
 // ============================================================================
 // Test Fixture Setup
 // ============================================================================
-// TODO: REWRITE THIS
 /*
  * MPI Window Unit Tests
  *
@@ -33,10 +32,21 @@ using namespace KokkosComm::mpi;
  * Each test is executed for multiple scalar types using Google Test's typed test framework.
  *
  * Test Categories:
- * 1. Fence-based synchronization (put/get operations)
- * 2. Lock-based synchronization (exclusive and shared locks)
- * 3. Multi-element operations
- * 4. Displacement/offset operations
+ * 1. Fence-based synchronization
+ *    - Basic Put operation (1D_contig_window_put)
+ *    - Basic Get operation (1D_contig_window_get)
+ *
+ * 2. Lock/Unlock synchronization (passive target)
+ *    - Exclusive lock Put (LockUnlockPut)
+ *    - Exclusive lock Get (LockUnlockGet)
+ *    - Shared lock with concurrent Gets (shared_lock_concurrent_get)
+ *    - Multi-element array Put (MultiElementLockPut)
+ *
+ * 3. PSCW synchronization (Post-Start-Complete-Wait)
+ *    - PSCW Put operation (PSCWPut)
+ *    - PSCW Get operation (PSCWGet)
+ *
+ * Tested Scalar Types: int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>
  */
 
 template <typename T>
@@ -49,11 +59,6 @@ class WindowTest : public testing::Test {
 // List of types to test - each test will run 6 times, once for each type
 using ScalarTypes = ::testing::Types<int, int64_t, float, double, Kokkos::complex<float>, Kokkos::complex<double>>;
 TYPED_TEST_SUITE(WindowTest, ScalarTypes);
-
-
-// ============================================================================
-// Test: Basic Put Operation with Fence Synchronization
-// ============================================================================
 
 /*
  * Test: Basic Put Operation with Fence Synchronization
@@ -99,12 +104,7 @@ void test_window_put() {
   }
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window) { test_window_put<typename TestFixture::Scalar>(); }
-
-
-// ============================================================================
-// Test: Basic Get Operation with Fence Synchronization
-// ============================================================================
+TYPED_TEST(WindowTest, 1D_contig_window_put) { test_window_put<typename TestFixture::Scalar>(); }
 
 /*
  * Test: Basic Get Operation with Fence Synchronization
@@ -148,10 +148,6 @@ void test_window_get() {
 }
 
 TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
-
-// ============================================================================
-// Test: Lock/Unlock Put Operation with Exclusive Lock
-// ============================================================================
 
 /*
  * Test: Lock/Unlock Put with Exclusive Lock
@@ -202,11 +198,6 @@ void test_lock_unlock_put() {
 
 TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixture::Scalar>(); }
 
-
-// ============================================================================
-// Test: Lock/Unlock Get Operation with Exclusive Lock
-// ============================================================================
-
 /*
  * Test: Lock/Unlock Get with Exclusive Lock
  *
@@ -214,11 +205,6 @@ TYPED_TEST(WindowTest, LockUnlockPut) { test_lock_unlock_put<typename TestFixtur
  * - Rank 0: Target (passive - provides data)
  * - Rank 1: Origin (locks rank 0, reads value, unlocks)
  * - Synchronization: Fine-grained (only 2 processes involved, no collective)
- *
- * This test validates:
- * - MPI_Win_lock with exclusive access
- * - MPI_Get operation within lock/unlock epoch
- * - Correct data retrieval from remote rank's window
  */
 template <typename Scalar>
 void test_lock_unlock_get() {
@@ -253,11 +239,6 @@ void test_lock_unlock_get() {
 
 TYPED_TEST(WindowTest, LockUnlockGet) { test_lock_unlock_get<typename TestFixture::Scalar>(); }
 
-
-// ============================================================================
-// Test: Shared Lock with Concurrent Gets
-// ============================================================================
-
 /*
  * Test: Shared Lock with Concurrent Get Operations
  *
@@ -266,11 +247,6 @@ TYPED_TEST(WindowTest, LockUnlockGet) { test_lock_unlock_get<typename TestFixtur
  * - Rank 1: Origin (locks rank 2 with shared lock, reads data)
  * - Rank 2: Target (passive - provides data to both origins)
  * - Synchronization: Shared locks allow concurrent read access
- *
- * This test validates:
- * - MPI_Win_lock with shared (non-exclusive) access
- * - Multiple processes can hold shared locks simultaneously
- * - Concurrent get operations from different origins to same target
  */
 template <typename Scalar>
 void test_window_shared_lock() {
@@ -305,11 +281,6 @@ void test_window_shared_lock() {
 
 TYPED_TEST(WindowTest, shared_lock_concurrent_get) { test_window_shared_lock<typename TestFixture::Scalar>(); }
 
-
-// ============================================================================
-// Test: Multi-Element Put with Lock/Unlock
-// ============================================================================
-
 /*
  * Test: Multi-Element Array Put with Exclusive Lock
  *
@@ -317,11 +288,6 @@ TYPED_TEST(WindowTest, shared_lock_concurrent_get) { test_window_shared_lock<typ
  * - Rank 0: Origin (locks rank 1, writes 10-element array, unlocks)
  * - Rank 1: Target (passive - receives array)
  * - Synchronization: Fine-grained with exclusive lock
- *
- * This test validates:
- * - MPI_Put with count > 1 within lock/unlock epoch
- * - Correct transfer of array data using passive target synchronization
- * - Lock/unlock ensuring multi-element operation completion
  */
 template <typename Scalar>
 void test_multi_element_lock_put() {
@@ -370,23 +336,13 @@ void test_multi_element_lock_put() {
 
 TYPED_TEST(WindowTest, MultiElementLockPut) { test_multi_element_lock_put<typename TestFixture::Scalar>(); }
 
-
-// ============================================================================
-// Test: PSCW Synchronization (Post-Start-Complete-Wait)
-// ============================================================================
-
 /*
- * Test: PSCW Synchronization Pattern
+ * Test: PSCW put operation
  *
  * Pattern: Post/Start -> Put -> Complete/Wait
  * - Rank 1: Target (posts window to expose memory to rank 0, then waits)
  * - Rank 0: Origin (starts access epoch, writes to rank 1, then completes)
  * - Synchronization: Explicit exposure/access epochs (alternative to fence/lock)
- *
- * This test validates:
- * - MPI_Win_post/wait on target side
- * - MPI_Win_start/complete on origin side
- * - MPI_Put operation within PSCW epoch
  */
 template <typename Scalar>
 void test_pscw_put() {
@@ -447,5 +403,73 @@ void test_pscw_put() {
 }
 
 TYPED_TEST(WindowTest, PSCWPut) { test_pscw_put<typename TestFixture::Scalar>(); }
+
+/*
+ * Test: PSCW Get Operation
+ *
+ * Pattern: Post/Start -> Get -> Complete/Wait
+ * - Rank 1: Target (posts window to expose memory to rank 0, then waits)
+ * - Rank 0: Origin (starts access epoch, reads from rank 1, then completes)
+ * - Synchronization: Explicit exposure/access epochs (alternative to fence/lock)
+ */
+template <typename Scalar>
+void test_pscw_get() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  // Create a single-element view on each process
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank * 100);
+
+  // Create window exposing local memory for RMA operations
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  // Create MPI groups for PSCW synchronization
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+  // Rank 0 is origin, rank 1 is target
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  if (rank == 1) {
+    // Target: Post window to allow rank 0 to access it
+    window.post(origin_group);
+  }
+
+  if (rank == 0) {
+    // Origin: Start access epoch to rank 1's window
+    window.start(target_group);
+
+    // Get value from rank 1
+    Scalar received;
+    window.get(&received, 1, 1, 0);
+
+    // Complete access epoch
+    window.complete();
+
+    // Verify we received rank 1's value (which is 100)
+    EXPECT_EQ(received, static_cast<Scalar>(100));
+  }
+
+  if (rank == 1) {
+    // Target: Wait for all origins to complete their accesses
+    window.wait();
+  }
+
+  // Clean up groups
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+}
+
+TYPED_TEST(WindowTest, PSCWGet) { test_pscw_get<typename TestFixture::Scalar>(); }
 
 }  // namespace
