@@ -41,6 +41,10 @@ class Window {
 
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
+
+  // TODO: ADD Accumulate
+
+  
   /*
   Function: put
   -----------------
