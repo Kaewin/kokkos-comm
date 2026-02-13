@@ -40,38 +40,29 @@ class Window {
   ~Window() { MPI_Win_free(&win); }
 
   // Data Transfer Functions:
-  // Put
   template <typename T>
   void put(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp) {
     MPI_Datatype datatype = KokkosComm::Impl::mpi_type_v<T>;
     MPI_Put(origin_addr, count, datatype, target_rank, target_disp, count, datatype, win);
   }
-  // Get
+
   template <typename T>
   void get(T* origin_addr, int count, int source_rank, MPI_Aint source_disp) {
     MPI_Datatype datatype = KokkosComm::Impl::mpi_type_v<T>;
     MPI_Get(origin_addr, count, datatype, source_rank, source_disp, count, datatype, win);
   }
-  // Accumulate
+
   template <typename T>
-  void accumulate(const T* origin_addr, int count, int target_rank, 
-                  MPI_Aint target_disp, MPI_Op op) {
+  void accumulate(const T* origin_addr, int count, int target_rank, MPI_Aint target_disp, MPI_Op op) {
     MPI_Datatype datatype = KokkosComm::Impl::mpi_type_v<T>;
-    MPI_Accumulate(origin_addr, count, datatype,      
-                  target_rank, target_disp,          
-                  count, datatype,                   
-                  op, win);                          
+    MPI_Accumulate(origin_addr, count, datatype,target_rank, target_disp, count, datatype, op, win);                          
   }
 
   // Synchronization Functions
-  // Fence Function:
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
-  // Lock/Unlock Functions:
   void lock(LockType type, int rank, int assert = 0) {
-    int mpi_lock_type = (type == LockType::Exclusive) 
-                        ? MPI_LOCK_EXCLUSIVE 
-                        : MPI_LOCK_SHARED;
+    int mpi_lock_type = (type == LockType::Exclusive) ? MPI_LOCK_EXCLUSIVE : MPI_LOCK_SHARED;
     MPI_Win_lock(mpi_lock_type, rank, assert, win);
   }
 
@@ -95,25 +86,6 @@ class Window {
   MPI_Comm comm_;
   MPI_Win win;
 
-  // Helper function to set the datatype
-  // template <typename T>
-  // MPI_Datatype get_mpi_datatype() {
-  //   if (std::is_same<T, int>::value) {
-  //     return MPI_INT;
-  //   } else if (std::is_same<T, int64_t>::value) {
-  //     return MPI_LONG_LONG;
-  //   } else if (std::is_same<T, float>::value) {
-  //     return MPI_FLOAT;
-  //   } else if (std::is_same<T, double>::value) {
-  //     return MPI_DOUBLE;
-  //   } else if (std::is_same<T, Kokkos::complex<float>>::value) {
-  //     return MPI_C_FLOAT_COMPLEX;
-  //   } else if (std::is_same<T, Kokkos::complex<double>>::value) {
-  //     return MPI_C_DOUBLE_COMPLEX;
-  //   } else {
-  //     return MPI_BYTE;
-  //   }
-  // }
 };
 
 }  // namespace KokkosComm
