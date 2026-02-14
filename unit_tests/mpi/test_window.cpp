@@ -62,7 +62,7 @@ void test_fence_put() {
   }
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window_put) { test_fence_put<typename TestFixture::Scalar>(); }
+TYPED_TEST(WindowTest, FencePut) { test_fence_put<typename TestFixture::Scalar>(); }
 
 template <typename Scalar>
 void test_fence_get() {
@@ -90,7 +90,7 @@ void test_fence_get() {
   window.fence();
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window_get) { test_fence_get<typename TestFixture::Scalar>(); }
+TYPED_TEST(WindowTest, FenceGet) { test_fence_get<typename TestFixture::Scalar>(); }
 
 template <typename Scalar>
 void test_fence_accumulate() {
@@ -120,7 +120,100 @@ void test_fence_accumulate() {
     EXPECT_EQ(data(0), static_cast<Scalar>(11));
   }
 }
-// This is 
-TYPED_TEST(WindowTest, 1D_contig_window_accumulate) { test_fence_accumulate<typename TestFixture::Scalar>();}
+
+TYPED_TEST(WindowTest, FenceAccumulate) { test_fence_accumulate<typename TestFixture::Scalar>();}
+
+template <typename Scalar>
+void test_lock_unlock_exclusive_put() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive, 1);
+    Scalar value = static_cast<Scalar>(0);
+    window.put(&value, 1, 1, 0);
+    window.unlock(1);
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 1) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(0));
+  }
+}
+
+TYPED_TEST(WindowTest, LockUnlockExclusivePut) { test_lock_unlock_exclusive_put<typename TestFixture::Scalar>();}
+
+template <typename Scalar>
+void test_lock_unlock_exclusive_get() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank * 100);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  if (rank == 1) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive, 0);
+    Scalar value = static_cast<Scalar>(-1);
+    window.get(&value, 1, 0, 0);
+    window.unlock(0);
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(0));
+  }
+}
+
+TYPED_TEST(WindowTest, LockUnlockExclusiveGet) { test_lock_unlock_exclusive_get<typename TestFixture::Scalar>(); }
+
+template <typename Scalar>
+void test_lock_unlock_exclusive_accumulate() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &rank);
+
+  if (size < 2) {
+    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  }
+
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    Scalar value = static_cast<Scalar>(10);
+    window.accumulate(&value, 1, 1, 0, MPI_SUM);
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 1) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(11));
+  }
+
+}
+
+TYPED_TEST(WindowTest, LockUnlockExclusiveAccumulate) { test_lock_unlock_exclusive_accumulate<typename TestFixture::Scalar>(); }
 
 }  // namespace
