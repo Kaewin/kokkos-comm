@@ -118,5 +118,6 @@ void test_fence_accumulate() {
     EXPECT_EQ(data(0), static_cast<Scalar>(11));
   }
 }
+TYPED_TEST(WindowTest, 1D_contig_window_accumulate) { test_fence_accumulate<typename TestFixture::Scalar>();}
 
 }  // namespace
