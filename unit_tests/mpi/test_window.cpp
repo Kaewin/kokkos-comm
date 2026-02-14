@@ -213,9 +213,40 @@ void test_lock_unlock_exclusive_accumulate() {
   if (rank == 1) {
     EXPECT_EQ(data(0), static_cast<Scalar>(11));
   }
-
 }
 
 TYPED_TEST(WindowTest, LockUnlockExclusiveAccumulate) { test_lock_unlock_exclusive_accumulate<typename TestFixture::Scalar>(); }
+
+template <typename Scalar>
+void test_lock_unlock_shared_get() {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 3) {
+    GTEST_SKIP() << "This test requires at least 3 MPI processes";
+  }
+
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank * 100);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  if (rank == 1 || rank == 2) {
+    window.lock(KokkosComm::Window<decltype(data)>::LockType::Shared, 0);
+    Scalar value = static_cast<Scalar>(-1);
+    window.get(&value, 1, 0, 0);
+    window.unlock(0);
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    EXPECT_EQ(data(0), static_cast<Scalar>(0));
+  }
+}
+
+TYPED_TEST(WindowTest, LockUnlockSharedGet) { test_lock_unlock_shared_get<typename TestFixture::Scalar>(); }
 
 }  // namespace
