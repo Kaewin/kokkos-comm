@@ -88,7 +88,7 @@ void test_fence_get() {
   window.fence();
 }
 
-TYPED_TEST(WindowTest, 1D_contig_window_get) { test_window_get<typename TestFixture::Scalar>(); }
+TYPED_TEST(WindowTest, 1D_contig_window_get) { test_fence_get<typename TestFixture::Scalar>(); }
 
 template <typename Scalar>
 void test_fence_accumulate() {
@@ -117,5 +117,6 @@ void test_fence_accumulate() {
   if (rank == 1) {
     EXPECT_EQ(data(0), static_cast<Scalar>(11));
   }
+}
 
 }  // namespace
