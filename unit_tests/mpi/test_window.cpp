@@ -205,7 +205,7 @@ void test_lock_unlock_exclusive_accumulate() {
     window.lock(KokkosComm::Window<decltype(data)>::LockType::Exclusive, 1);
     Scalar value = static_cast<Scalar>(10);
     window.accumulate(&value, 1, 1, 0, MPI_SUM);
-    window.unlock();
+    window.unlock(1);
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
