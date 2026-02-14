@@ -190,7 +190,7 @@ template <typename Scalar>
 void test_lock_unlock_exclusive_accumulate() {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   if (size < 2) {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
