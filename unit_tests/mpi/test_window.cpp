@@ -52,7 +52,6 @@ void test_fence_put() {
 
   if (rank == 0) {
     Scalar value = static_cast<Scalar>(99);
-    // put value 99 into rank 1's window at displacement 0
     window.put(&value, 1, 1, 0);
   }
 

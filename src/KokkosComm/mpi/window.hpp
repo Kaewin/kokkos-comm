@@ -70,11 +70,11 @@ class Window {
 
   // PSCW Functions:
   void post(MPI_Group post_group, int assert = 0) {
-      MPI_Win_post(post_group, assert, win);
+    MPI_Win_post(post_group, assert, win);
   }
 
   void start(MPI_Group start_group, int assert = 0) {
-      MPI_Win_start(start_group, assert, win);
+    MPI_Win_start(start_group, assert, win);
   }
 
   void complete() { MPI_Win_complete(win); }

@@ -70,7 +70,7 @@ void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank,
     window.unlock(1); // Unlock rank 1's memory
   }
 
-  MPI_Barrier(comm);
+  // MPI_Barrier(comm);
 }
 // Ranks 0 and 1 read data from rank 2's memory using Lock/Unlock Shared
 template <typename Space, typename View>
@@ -86,7 +86,7 @@ void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, in
     window.unlock(2); // Both unlock
   }
 
-  MPI_Barrier(comm);
+  // MPI_Barrier(comm);
 }
 
 // Simple fence put from rank 0 to rank 1
@@ -131,7 +131,7 @@ void pscw_put(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
     window.wait();
   }
   
-  MPI_Barrier(comm);
+  // MPI_Barrier(comm);
 }
 
 // PSCW Get - rank 0 reads from rank 1's memory
@@ -155,7 +155,7 @@ void pscw_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
     window.wait();
   }
   
-  MPI_Barrier(comm);
+  // MPI_Barrier(comm);
 }
 
 // ============================================================================
