@@ -274,11 +274,11 @@ void pscw_put() {
   MPI_Group_incl(world_group, 1, target_ranks, &target_group);
 
   if (rank == 0) {
-    window.post(&origin_group);
+    window.post(origin_group);
   }
 
   if (rank == 1) {
-    window.start(&target_group);
+    window.start(target_group);
     Scalar value = static_cast<Scalar>(-1); 
     window.get(&value, 1, 0, 0);
     window.complete();
@@ -286,7 +286,7 @@ void pscw_put() {
   }
 
   if (rank == 2) {
-    window.start(&target_group);
+    window.start(target_group);
     Scalar value = static_cast<Scalar>(-1); 
     window.get(&value, 1, 0, 0);
     window.complete();
@@ -325,11 +325,11 @@ void pscw_get() {
   MPI_Group_incl(world_group, 1, target_ranks, &target_group);
 
   if (rank == 0) {
-    window.post(&origin_group);
+    window.post(origin_group);
   }
 
   if (rank == 1) {
-    window.start(&target_group);
+    window.start(target_group);
     Scalar value = static_cast<Scalar>(-1); 
     window.get(&value, 1, 0, 0);
     window.complete();
@@ -337,7 +337,7 @@ void pscw_get() {
   }
 
   if (rank == 2) {
-    window.start(&target_group);
+    window.start(target_group);
     Scalar value = static_cast<Scalar>(-1); 
     window.get(&value, 1, 0, 0);
     window.complete();
