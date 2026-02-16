@@ -52,6 +52,7 @@ void test_fence_put() {
 
   if (rank == 0) {
     Scalar value = static_cast<Scalar>(99);
+    // put value 99 into rank 1's window at displacement 0
     window.put(&value, 1, 1, 0);
   }
 
@@ -249,19 +250,52 @@ void test_lock_unlock_shared_get() {
 
 TYPED_TEST(WindowTest, LockUnlockSharedGet) { test_lock_unlock_shared_get<typename TestFixture::Scalar>(); }
 
-
-
-
-
-
 template <typename Scalar>
 void pscw_put() {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (size < 2) {
-    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  if (size < 3) {
+    GTEST_SKIP() << "This test requires at least 3 MPI processes";
+  }
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+  int origin_ranks[2] = {1, 2};
+  int target_ranks[1] = {0};
+
+  MPI_Group_incl(world_group, 2, origin_ranks, &origin_group);
+  MPI_Group_incl(world_group, 1, target_ranks, &target_group);
+
+  if (rank == 0) {
+    window.post(&origin_group);
+  }
+
+  if (rank == 1) {
+    window.start(&target_group);
+    Scalar value = static_cast<Scalar>(-1); 
+    window.get(&value, 1, 0, 0);
+    window.complete();
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  if (rank == 2) {
+    window.start(&target_group);
+    Scalar value = static_cast<Scalar>(-1); 
+    window.get(&value, 1, 0, 0);
+    window.complete();
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  if (rank == 0) {
+    window.wait();
+    EXPECT_EQ(data(0), static_cast<Scalar>(0));
   }
 }
 
@@ -273,8 +307,46 @@ void pscw_get() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (size < 2) {
-    GTEST_SKIP() << "This test requires at least 2 MPI processes";
+  if (size < 3) {
+    GTEST_SKIP() << "This test requires at least 3 MPI processes";
+  }
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+  int origin_ranks[2] = {1, 2};
+  int target_ranks[1] = {0};
+
+  MPI_Group_incl(world_group, 2, origin_ranks, &origin_group);
+  MPI_Group_incl(world_group, 1, target_ranks, &target_group);
+
+  if (rank == 0) {
+    window.post(&origin_group);
+  }
+
+  if (rank == 1) {
+    window.start(&target_group);
+    Scalar value = static_cast<Scalar>(-1); 
+    window.get(&value, 1, 0, 0);
+    window.complete();
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  if (rank == 2) {
+    window.start(&target_group);
+    Scalar value = static_cast<Scalar>(-1); 
+    window.get(&value, 1, 0, 0);
+    window.complete();
+    EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
+
+  if (rank == 0) {
+    window.wait();
+    EXPECT_EQ(data(0), static_cast<Scalar>(0));
   }
 }
 
