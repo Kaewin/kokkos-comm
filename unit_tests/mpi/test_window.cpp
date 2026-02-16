@@ -289,6 +289,10 @@ void pscw_put() {
   }
 }
 
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
 TYPED_TEST(WindowTest, PSCWPut) { pscw_put<typename TestFixture::Scalar>(); }
 
 template <typename Scalar>
@@ -340,6 +344,10 @@ void pscw_get() {
   }
 }
 
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
 TYPED_TEST(WindowTest, PSCWGet) { pscw_get<typename TestFixture::Scalar>(); }
 
 template <typename Scalar>
@@ -382,6 +390,10 @@ void pscw_accumulate() {
     EXPECT_EQ(data(0), static_cast<Scalar>(11));
   }
 }
+
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
 
 TYPED_TEST(WindowTest, PSCWAccumulate) { pscw_accumulate<typename TestFixture::Scalar>(); }
 
