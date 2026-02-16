@@ -352,6 +352,36 @@ void pscw_accumulate() {
   if (size < 2) {
     GTEST_SKIP() << "This test requires at least 2 MPI processes";
   }
+
+  Kokkos::View<Scalar*, Kokkos::HostSpace> data("data", 1);
+  data(0) = static_cast<Scalar>(rank);
+
+  KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+  int origin_ranks[1] = {0};
+  int target_ranks[1] = {1};
+
+  MPI_Group_incl(world_group, 1, origin_ranks, &origin_group);
+  MPI_Group_incl(world_group, 1, target_ranks, &target_group);  
+
+  if (rank == 1) {
+    window.post(origin_group);
+  }
+
+  if (rank == 0) {
+    window.start(target_group);
+    Scalar value = static_cast<Scalar>(10);
+    window.accumulate(&value, 1, 1, 0, MPI_SUM);
+    window.complete();
+  }
+
+  if (rank == 1) {
+    window.wait();
+    EXPECT_EQ(data(0), static_cast<Scalar>(11));
+  }
 }
 
 TYPED_TEST(WindowTest, PSCWAccumulate) { pscw_accumulate<typename TestFixture::Scalar>(); }
