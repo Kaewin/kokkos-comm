@@ -69,9 +69,8 @@ void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank,
     window.put(v.data(), v.size(), 1, 0); // Write to rank 1
     window.unlock(1); // Unlock rank 1's memory
   }
-
-  // MPI_Barrier(comm);
 }
+
 // Ranks 0 and 1 read data from rank 2's memory using Lock/Unlock Shared
 template <typename Space, typename View>
 void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, int size, const View &v,
@@ -85,8 +84,6 @@ void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, in
     window.get(v.data(), v.size(), 2, 0); // Both read from rank 2
     window.unlock(2); // Both unlock
   }
-
-  // MPI_Barrier(comm);
 }
 
 // Simple fence put from rank 0 to rank 1
@@ -104,9 +101,9 @@ void fence_put(benchmark::State &, MPI_Comm, const Space &, int rank, const View
 template <typename Space, typename View>
 void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v) {
   if (rank == 0) {
-    MPI_Send(v.data(), v.size(), MPI_DOUBLE, 1, 0, comm);
+    MPI_Send(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 1, 0, comm);
   } else if (rank == 1) {
-    MPI_Recv(v.data(), v.size(), MPI_DOUBLE, 0, 0, comm, MPI_STATUS_IGNORE);
+    MPI_Recv(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 0, 0, comm, MPI_STATUS_IGNORE);
   }
 }
 
@@ -130,8 +127,6 @@ void pscw_put(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
     // Target: Wait for completion
     window.wait();
   }
-  
-  // MPI_Barrier(comm);
 }
 
 // PSCW Get - rank 0 reads from rank 1's memory
@@ -154,8 +149,6 @@ void pscw_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
     // Target: Wait for completion
     window.wait();
   }
-  
-  // MPI_Barrier(comm);
 }
 
 // ============================================================================
