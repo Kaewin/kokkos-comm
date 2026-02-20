@@ -32,22 +32,6 @@ void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank,
   }
 }
 
-// DONE: Remove, do exclusive get
-// template <typename Space, typename View>
-// void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, int size, const View &v,
-//                             KokkosComm::Window<View> &window) {
-//   if (size < 3) {
-//     return; 
-//   }
-
-//   if (rank == 0 || rank == 1) {
-//     window.lock(KokkosComm::Window<View>::LockType::Shared, 2); 
-//     window.get(v.data(), v.size(), 2, 0); 
-//     window.unlock(2); 
-//   }
-// }
-
-// DONE: lock_unlock_get
 template <typename Space, typename View>
 void lock_unlock_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
                       KokkosComm::Window<View> &window) {
@@ -58,7 +42,15 @@ void lock_unlock_get(benchmark::State &, MPI_Comm comm, const Space &, int rank,
   }                      
 }
 
-// TODO: lock_unlock_accumulate
+template <typename Space, typename View>
+void lock_unlock_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
+                              KokkosComm::Window<View> &window){
+  if (rank == 0) {
+    window.lock(KokkosComm::Window<View>::LockType::Exclusive, 1);
+    window.accumulate(v.data(), v.size(), 1, 0, MPI_SUM);
+    window.unlock(1);
+  }
+}
 
 template <typename Space, typename View>
 void fence_put(benchmark::State &, MPI_Comm, const Space &, int rank, const View &v,
@@ -70,7 +62,6 @@ void fence_put(benchmark::State &, MPI_Comm, const Space &, int rank, const View
   window.fence(); 
 }
 
-// DONE: Fence Get
 template <typename Space, typename View>
 void fence_get(benchmark::State &, MPI_Comm, const Space &, int rank, const View &v,
                KokkosComm::Window<View> &window) {
@@ -194,6 +185,37 @@ void benchmark_lock_unlock_get(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
+void benchmark_lock_unlock_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_lock_unlock_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  auto space = Kokkos::DefaultExecutionSpace();
+  using view_type = Kokkos::View<Scalar *>;
+
+  const int n = state.range(0);
+  view_type v("data", n);
+
+  Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
+    v(i) = static_cast<Scalar>(i);
+  });
+  Kokkos::fence();
+
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+
+  while (state.KeepRunning()) {
+    do_iteration(state, MPI_COMM_WORLD, lock_unlock_accumulate<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, std::ref(window));
+  }
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
 // Fence
 void benchmark_fence_put(benchmark::State &state) {
   int rank, size;
@@ -226,7 +248,6 @@ void benchmark_fence_put(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
-// DONE: Fence Get
 void benchmark_fence_get(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -388,6 +409,12 @@ BENCHMARK(benchmark_lock_unlock_get)
     ->UseManualTime()
     ->Unit(benchmark::kMicrosecond);
 
+BENCHMARK(benchmark_lock_unlock_accumulate)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
 BENCHMARK(benchmark_fence_put)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
@@ -400,12 +427,6 @@ BENCHMARK(benchmark_fence_get)
     ->UseManualTime()
     ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK(benchmark_sendrecv_comparison)
-    ->RangeMultiplier(8)
-    ->Range(1, 1<<18)
-    ->UseManualTime()
-    ->Unit(benchmark::kMicrosecond);
-
 BENCHMARK(benchmark_pscw_put)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
@@ -413,6 +434,12 @@ BENCHMARK(benchmark_pscw_put)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK(benchmark_pscw_get)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK(benchmark_sendrecv_comparison)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
