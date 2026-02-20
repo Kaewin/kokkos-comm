@@ -32,22 +32,31 @@ void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank,
   }
 }
 
-// TODO: Remove, do exclusive get
+// DONE: Remove, do exclusive get
+// template <typename Space, typename View>
+// void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, int size, const View &v,
+//                             KokkosComm::Window<View> &window) {
+//   if (size < 3) {
+//     return; 
+//   }
+
+//   if (rank == 0 || rank == 1) {
+//     window.lock(KokkosComm::Window<View>::LockType::Shared, 2); 
+//     window.get(v.data(), v.size(), 2, 0); 
+//     window.unlock(2); 
+//   }
+// }
+
+// DONE: lock_unlock_get
 template <typename Space, typename View>
-void lock_unlock_shared_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, int size, const View &v,
-                            KokkosComm::Window<View> &window) {
-  if (size < 3) {
-    return; 
-  }
-
-  if (rank == 0 || rank == 1) {
-    window.lock(KokkosComm::Window<View>::LockType::Shared, 2); 
-    window.get(v.data(), v.size(), 2, 0); 
-    window.unlock(2); 
-  }
+void lock_unlock_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
+                      KokkosComm::Window<View> &window) {
+  if (rank == 1) {
+    window.lock(KokkosComm::Window<View>::LockType::Exclusive, 0); 
+    window.get(v.data(), v.size(), 0, 0); 
+    window.unlock(0); 
+  }                      
 }
-
-// TODO: lock_unlock_get
 
 // TODO: lock_unlock_accumulate
 
@@ -145,13 +154,13 @@ void benchmark_lock_unlock_put(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
-void benchmark_lock_unlock_shared_get(benchmark::State &state) {
+void benchmark_lock_unlock_get(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (size < 3) {
-    state.SkipWithError("benchmark_lock_unlock_shared_get needs at least 3 ranks");
+  if (size < 2) {
+    state.SkipWithError("benchmark_lock_unlock_get needs at least 2 ranks");
     return;
   }
 
@@ -169,8 +178,8 @@ void benchmark_lock_unlock_shared_get(benchmark::State &state) {
   KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
 
   while (state.KeepRunning()) {
-    do_iteration(state, MPI_COMM_WORLD, lock_unlock_shared_get<Kokkos::DefaultExecutionSpace, view_type>,
-                 space, rank, size, v, std::ref(window));
+    do_iteration(state, MPI_COMM_WORLD, lock_unlock_get<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, std::ref(window));
   }
 
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
@@ -334,7 +343,7 @@ BENCHMARK(benchmark_lock_unlock_put)
     ->UseManualTime()
     ->Unit(benchmark::kMicrosecond);
 
-BENCHMARK(benchmark_lock_unlock_shared_get)
+BENCHMARK(benchmark_lock_unlock_get)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
