@@ -72,7 +72,15 @@ void fence_get(benchmark::State &, MPI_Comm, const Space &, int rank, const View
   window.fence(); 
 }
 
-// TODO: Fence Accumulate
+template <typename Space, typename View>
+void fence_accumulate(benchmark::State &, MPI_Comm, const Space &, int rank, const View &v,
+               KokkosComm::Window<View> &window) {
+  window.fence(); 
+  if (rank == 0) {
+    window.accumulate(v.data(), v.size(), 1, 0, MPI_SUM);
+  }
+  window.fence(); 
+}
 
 template <typename Space, typename View>
 void pscw_put(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
@@ -278,7 +286,37 @@ void benchmark_fence_get(benchmark::State &state) {
 
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
-// TODO: Fence Accumulate
+
+void benchmark_fence_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_fence_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  auto space = Kokkos::DefaultExecutionSpace();
+  using view_type = Kokkos::View<Scalar *>;
+
+  const int n = state.range(0);
+  view_type v("data", n);
+
+  Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
+    v(i) = static_cast<Scalar>(i);
+  });
+  Kokkos::fence();
+
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+
+  while (state.KeepRunning()) {
+    do_iteration(state, MPI_COMM_WORLD, fence_accumulate<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, std::ref(window));
+  }
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
 
 // PSCW
 void benchmark_pscw_put(benchmark::State &state) {
@@ -422,6 +460,12 @@ BENCHMARK(benchmark_fence_put)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK(benchmark_fence_get)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK(benchmark_fence_accumulate)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
