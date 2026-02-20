@@ -118,7 +118,6 @@ void pscw_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const 
   }
 }
 
-// TODO: PSCW_accumulate
 template <typename Space, typename View>
 void pscw_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
               KokkosComm::Window<View> &window, MPI_Group &origin_group, MPI_Group &target_group) {
@@ -128,7 +127,7 @@ void pscw_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank,
   
   if (rank == 0) {
     window.start(target_group);
-    window.get(v.data(), v.size(), 1, 0, MPI_SUM);  
+    window.accumulate(v.data(), v.size(), 1, 0, MPI_SUM);  
     window.complete();
   }
   
@@ -420,7 +419,6 @@ void benchmark_pscw_get(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
-// TODO: PSCW Accumulate
 void benchmark_pscw_accumulate(benchmark::State &state) {
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -452,7 +450,7 @@ void benchmark_pscw_accumulate(benchmark::State &state) {
   MPI_Group_incl(world_group, 1, &target_rank, &target_group);
 
   while (state.KeepRunning()) {
-    do_iteration(state, MPI_COMM_WORLD, pscw__accumulate<Kokkos::DefaultExecutionSpace, view_type>,
+    do_iteration(state, MPI_COMM_WORLD, pscw_accumulate<Kokkos::DefaultExecutionSpace, view_type>,
                  space, rank, v, std::ref(window), std::ref(origin_group), std::ref(target_group));
   }
 
