@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------------------------------------------------------
 Benchmark                                                                     Time             CPU   Iterations UserCounters...
 -------------------------------------------------------------------------------------------------------------------------------
-[0;32mbenchmark_sendrecv/manual_time                                       [m[0;33m      1.55 ms         1.53 ms   [m[0;36m       713[m bytes_per_second=9.60471Gi/s[m
-[m[0;32mbenchmark_channel_sendrecv/manual_time                               [m[0;33m     0.811 ms        0.796 ms   [m[0;36m       822[m bytes_per_second=18.367Gi/s[m
-[m[0;32mbenchmark_2dhalo/manual_time                                         [m[0;33m     0.501 ms        0.494 ms   [m[0;36m      1000[m active_ranks=1[m bytes_per_second=187.151Mi/s[m nx=512[m
+[0;32mbenchmark_sendrecv/manual_time                                       [m[0;33m      1.06 ms         1.05 ms   [m[0;36m       662[m bytes_per_second=14.1075Gi/s[m
+[m[0;32mbenchmark_channel_sendrecv/manual_time                               [m[0;33m     0.686 ms        0.682 ms   [m[0;36m      1047[m bytes_per_second=21.7223Gi/s[m
+[m[0;32mbenchmark_2dhalo/manual_time                                         [m[0;33m     0.509 ms        0.505 ms   [m[0;36m      1000[m active_ranks=1[m bytes_per_second=184.211Mi/s[m nx=512[m
 [m[0;32mbenchmark_osu_latency_KokkosComm_sendrecv/1/manual_time              [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_KokkosComm needs exactly 2 ranks'[m
 [m[0;32mbenchmark_osu_latency_KokkosComm_sendrecv/8/manual_time              [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_KokkosComm needs exactly 2 ranks'[m
 [m[0;32mbenchmark_osu_latency_KokkosComm_sendrecv/64/manual_time             [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_KokkosComm needs exactly 2 ranks'[m
@@ -48,46 +48,74 @@ Benchmark                                                                     Ti
 [m[0;32mbenchmark_osu_latency_MPI_sendrecv/16777216/manual_time              [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_MPI needs exactly 2 ranks'[m
 [m[0;32mbenchmark_osu_latency_MPI_sendrecv/134217728/manual_time             [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_MPI needs exactly 2 ranks'[m
 [m[0;32mbenchmark_osu_latency_MPI_sendrecv/268435456/manual_time             [m[0;31mERROR OCCURRED: 'benchmark_osu_latency_MPI needs exactly 2 ranks'[m
-[m[0;32mbenchmark_lock_unlock_put/1/manual_time                              [m[0;33m      2.39 us         2.99 us   [m[0;36m    304434[m bytes_per_second=3.18576Mi/s[m
-[m[0;32mbenchmark_lock_unlock_put/8/manual_time                              [m[0;33m      2.55 us         3.17 us   [m[0;36m    267010[m bytes_per_second=23.9033Mi/s[m
-[m[0;32mbenchmark_lock_unlock_put/64/manual_time                             [m[0;33m      2.44 us         3.04 us   [m[0;36m    299461[m bytes_per_second=200.32Mi/s[m
-[m[0;32mbenchmark_lock_unlock_put/512/manual_time                            [m[0;33m      2.57 us         3.12 us   [m[0;36m    273635[m bytes_per_second=1.48237Gi/s[m
-[m[0;32mbenchmark_lock_unlock_put/4096/manual_time                           [m[0;33m      4.46 us         5.07 us   [m[0;36m    158439[m bytes_per_second=6.84464Gi/s[m
-[m[0;32mbenchmark_lock_unlock_put/32768/manual_time                          [m[0;33m      17.1 us         17.5 us   [m[0;36m     40436[m bytes_per_second=14.2439Gi/s[m
-[m[0;32mbenchmark_lock_unlock_put/262144/manual_time                         [m[0;33m       125 us          124 us   [m[0;36m      5778[m bytes_per_second=15.5804Gi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/1/manual_time                       [m[0;33m      2.75 us         3.29 us   [m[0;36m    266533[m bytes_per_second=2.77225Mi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/8/manual_time                       [m[0;33m      3.22 us         3.88 us   [m[0;36m    225840[m bytes_per_second=18.9652Mi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/64/manual_time                      [m[0;33m      2.85 us         3.44 us   [m[0;36m    248512[m bytes_per_second=171.089Mi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/512/manual_time                     [m[0;33m      3.12 us         3.70 us   [m[0;36m    218928[m bytes_per_second=1.22265Gi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/4096/manual_time                    [m[0;33m      4.89 us         5.39 us   [m[0;36m    131871[m bytes_per_second=6.24129Gi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/32768/manual_time                   [m[0;33m      18.9 us         19.2 us   [m[0;36m     36082[m bytes_per_second=12.9296Gi/s[m
-[m[0;32mbenchmark_lock_unlock_shared_get/262144/manual_time                  [m[0;33m       183 us          181 us   [m[0;36m      4319[m bytes_per_second=10.6637Gi/s[m
-[m[0;32mbenchmark_fence_put/1/manual_time                                    [m[0;33m      2.92 us         3.52 us   [m[0;36m    251386[m bytes_per_second=2.61443Mi/s[m
-[m[0;32mbenchmark_fence_put/8/manual_time                                    [m[0;33m      3.11 us         3.68 us   [m[0;36m    191540[m bytes_per_second=19.617Mi/s[m
-[m[0;32mbenchmark_fence_put/64/manual_time                                   [m[0;33m      3.01 us         3.64 us   [m[0;36m    236246[m bytes_per_second=162.338Mi/s[m
-[m[0;32mbenchmark_fence_put/512/manual_time                                  [m[0;33m      3.16 us         3.71 us   [m[0;36m    200303[m bytes_per_second=1.20675Gi/s[m
-[m[0;32mbenchmark_fence_put/4096/manual_time                                 [m[0;33m      4.50 us         4.98 us   [m[0;36m    143897[m bytes_per_second=6.77589Gi/s[m
-[m[0;32mbenchmark_fence_put/32768/manual_time                                [m[0;33m      17.2 us         17.4 us   [m[0;36m     34432[m bytes_per_second=14.2107Gi/s[m
-[m[0;32mbenchmark_fence_put/262144/manual_time                               [m[0;33m       123 us          122 us   [m[0;36m      5518[m bytes_per_second=15.8556Gi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/1/manual_time                          [m[0;33m     0.361 us        0.754 us   [m[0;36m   2153174[m bytes_per_second=42.3064Mi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/8/manual_time                          [m[0;33m     0.330 us        0.720 us   [m[0;36m   1709219[m bytes_per_second=370.215Mi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/64/manual_time                         [m[0;33m     0.420 us        0.904 us   [m[0;36m   1803953[m bytes_per_second=2.27083Gi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/512/manual_time                        [m[0;33m      2.28 us         2.75 us   [m[0;36m    294089[m bytes_per_second=3.35304Gi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/4096/manual_time                       [m[0;33m      3.82 us         4.27 us   [m[0;36m    187294[m bytes_per_second=15.998Gi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/32768/manual_time                      [m[0;33m      16.7 us         17.2 us   [m[0;36m     41035[m bytes_per_second=29.2539Gi/s[m
-[m[0;32mbenchmark_sendrecv_comparison/262144/manual_time                     [m[0;33m       122 us          121 us   [m[0;36m      5434[m bytes_per_second=32.0952Gi/s[m
-[m[0;32mbenchmark_pscw_put/1/manual_time                                     [m[0;33m      2.60 us         3.24 us   [m[0;36m    298299[m bytes_per_second=2.92883Mi/s[m
-[m[0;32mbenchmark_pscw_put/8/manual_time                                     [m[0;33m      2.77 us         3.40 us   [m[0;36m    249902[m bytes_per_second=22.0589Mi/s[m
-[m[0;32mbenchmark_pscw_put/64/manual_time                                    [m[0;33m      2.75 us         3.40 us   [m[0;36m    294907[m bytes_per_second=177.407Mi/s[m
-[m[0;32mbenchmark_pscw_put/512/manual_time                                   [m[0;33m      2.90 us         3.51 us   [m[0;36m    241879[m bytes_per_second=1.31533Gi/s[m
-[m[0;32mbenchmark_pscw_put/4096/manual_time                                  [m[0;33m      4.22 us         4.74 us   [m[0;36m    166442[m bytes_per_second=7.23292Gi/s[m
-[m[0;32mbenchmark_pscw_put/32768/manual_time                                 [m[0;33m      16.9 us         17.3 us   [m[0;36m     42791[m bytes_per_second=14.4338Gi/s[m
-[m[0;32mbenchmark_pscw_put/262144/manual_time                                [m[0;33m       124 us          122 us   [m[0;36m      5687[m bytes_per_second=15.7531Gi/s[m
-[m[0;32mbenchmark_pscw_get/1/manual_time                                     [m[0;33m      2.57 us         3.20 us   [m[0;36m    290083[m bytes_per_second=2.97265Mi/s[m
-[m[0;32mbenchmark_pscw_get/8/manual_time                                     [m[0;33m      2.46 us         3.00 us   [m[0;36m    282243[m bytes_per_second=24.7658Mi/s[m
-[m[0;32mbenchmark_pscw_get/64/manual_time                                    [m[0;33m      2.53 us         3.07 us   [m[0;36m    298824[m bytes_per_second=193.197Mi/s[m
-[m[0;32mbenchmark_pscw_get/512/manual_time                                   [m[0;33m      2.94 us         3.55 us   [m[0;36m    256057[m bytes_per_second=1.29628Gi/s[m
-[m[0;32mbenchmark_pscw_get/4096/manual_time                                  [m[0;33m      4.47 us         5.01 us   [m[0;36m    160119[m bytes_per_second=6.82097Gi/s[m
-[m[0;32mbenchmark_pscw_get/32768/manual_time                                 [m[0;33m      17.4 us         17.8 us   [m[0;36m     41599[m bytes_per_second=14.0024Gi/s[m
-[m[0;32mbenchmark_pscw_get/262144/manual_time                                [m[0;33m       130 us          128 us   [m[0;36m      5707[m bytes_per_second=15.0465Gi/s[m
+[m[0;32mbenchmark_lock_unlock_put/1/manual_time                              [m[0;33m      1.54 us         2.17 us   [m[0;36m    398879[m bytes_per_second=4.95699Mi/s[m
+[m[0;32mbenchmark_lock_unlock_put/8/manual_time                              [m[0;33m      1.52 us         2.18 us   [m[0;36m    458288[m bytes_per_second=40.2681Mi/s[m
+[m[0;32mbenchmark_lock_unlock_put/64/manual_time                             [m[0;33m      1.51 us         2.14 us   [m[0;36m    467060[m bytes_per_second=323.523Mi/s[m
+[m[0;32mbenchmark_lock_unlock_put/512/manual_time                            [m[0;33m      1.76 us         2.40 us   [m[0;36m    401229[m bytes_per_second=2.16211Gi/s[m
+[m[0;32mbenchmark_lock_unlock_put/4096/manual_time                           [m[0;33m      3.34 us         4.06 us   [m[0;36m    208597[m bytes_per_second=9.14947Gi/s[m
+[m[0;32mbenchmark_lock_unlock_put/32768/manual_time                          [m[0;33m      15.1 us         16.1 us   [m[0;36m     46388[m bytes_per_second=16.1805Gi/s[m
+[m[0;32mbenchmark_lock_unlock_put/262144/manual_time                         [m[0;33m       119 us          121 us   [m[0;36m      5838[m bytes_per_second=16.453Gi/s[m
+[m[0;32mbenchmark_lock_unlock_get/1/manual_time                              [m[0;33m      1.71 us         2.14 us   [m[0;36m    421202[m bytes_per_second=4.45414Mi/s[m
+[m[0;32mbenchmark_lock_unlock_get/8/manual_time                              [m[0;33m      1.71 us         2.12 us   [m[0;36m    414201[m bytes_per_second=35.7321Mi/s[m
+[m[0;32mbenchmark_lock_unlock_get/64/manual_time                             [m[0;33m      1.71 us         2.11 us   [m[0;36m    409287[m bytes_per_second=285.274Mi/s[m
+[m[0;32mbenchmark_lock_unlock_get/512/manual_time                            [m[0;33m      1.94 us         2.35 us   [m[0;36m    354782[m bytes_per_second=1.96483Gi/s[m
+[m[0;32mbenchmark_lock_unlock_get/4096/manual_time                           [m[0;33m      3.52 us         3.96 us   [m[0;36m    196984[m bytes_per_second=8.66021Gi/s[m
+[m[0;32mbenchmark_lock_unlock_get/32768/manual_time                          [m[0;33m      15.9 us         16.5 us   [m[0;36m     42176[m bytes_per_second=15.3748Gi/s[m
+[m[0;32mbenchmark_lock_unlock_get/262144/manual_time                         [m[0;33m       122 us          122 us   [m[0;36m      5779[m bytes_per_second=16.0686Gi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/1/manual_time                       [m[0;33m      2.94 us         3.54 us   [m[0;36m    238928[m bytes_per_second=2.59258Mi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/8/manual_time                       [m[0;33m      2.91 us         3.51 us   [m[0;36m    228722[m bytes_per_second=20.9606Mi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/64/manual_time                      [m[0;33m      2.94 us         3.56 us   [m[0;36m    230670[m bytes_per_second=165.909Mi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/512/manual_time                     [m[0;33m      3.47 us         4.12 us   [m[0;36m    200415[m bytes_per_second=1.09981Gi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/4096/manual_time                    [m[0;33m      24.3 us         24.9 us   [m[0;36m     28650[m bytes_per_second=1.25723Gi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/32768/manual_time                   [m[0;33m       194 us          194 us   [m[0;36m      3686[m bytes_per_second=1.26022Gi/s[m
+[m[0;32mbenchmark_lock_unlock_accumulate/262144/manual_time                  [m[0;33m      1538 us         1527 us   [m[0;36m       425[m bytes_per_second=1.2698Gi/s[m
+[m[0;32mbenchmark_fence_put/1/manual_time                                    [m[0;33m      2.83 us         3.39 us   [m[0;36m    247622[m bytes_per_second=2.69591Mi/s[m
+[m[0;32mbenchmark_fence_put/8/manual_time                                    [m[0;33m      2.80 us         3.31 us   [m[0;36m    247106[m bytes_per_second=21.8127Mi/s[m
+[m[0;32mbenchmark_fence_put/64/manual_time                                   [m[0;33m      2.82 us         3.33 us   [m[0;36m    247284[m bytes_per_second=172.99Mi/s[m
+[m[0;32mbenchmark_fence_put/512/manual_time                                  [m[0;33m      3.11 us         3.63 us   [m[0;36m    227717[m bytes_per_second=1.22671Gi/s[m
+[m[0;32mbenchmark_fence_put/4096/manual_time                                 [m[0;33m      4.80 us         5.32 us   [m[0;36m    146225[m bytes_per_second=6.35306Gi/s[m
+[m[0;32mbenchmark_fence_put/32768/manual_time                                [m[0;33m      17.5 us         17.9 us   [m[0;36m     39925[m bytes_per_second=13.9384Gi/s[m
+[m[0;32mbenchmark_fence_put/262144/manual_time                               [m[0;33m       125 us          125 us   [m[0;36m      5552[m bytes_per_second=15.5837Gi/s[m
+[m[0;32mbenchmark_fence_get/1/manual_time                                    [m[0;33m      2.58 us         3.10 us   [m[0;36m    278445[m bytes_per_second=2.95197Mi/s[m
+[m[0;32mbenchmark_fence_get/8/manual_time                                    [m[0;33m      2.58 us         3.10 us   [m[0;36m    278984[m bytes_per_second=23.6153Mi/s[m
+[m[0;32mbenchmark_fence_get/64/manual_time                                   [m[0;33m      2.50 us         3.15 us   [m[0;36m    274945[m bytes_per_second=195.617Mi/s[m
+[m[0;32mbenchmark_fence_get/512/manual_time                                  [m[0;33m      2.79 us         3.42 us   [m[0;36m    249159[m bytes_per_second=1.36952Gi/s[m
+[m[0;32mbenchmark_fence_get/4096/manual_time                                 [m[0;33m      4.29 us         4.95 us   [m[0;36m    162781[m bytes_per_second=7.11699Gi/s[m
+[m[0;32mbenchmark_fence_get/32768/manual_time                                [m[0;33m      16.7 us         17.6 us   [m[0;36m     41827[m bytes_per_second=14.5892Gi/s[m
+[m[0;32mbenchmark_fence_get/262144/manual_time                               [m[0;33m       129 us          132 us   [m[0;36m      5842[m bytes_per_second=15.1435Gi/s[m
+[m[0;32mbenchmark_fence_accumulate/1/manual_time                             [m[0;33m      4.17 us         4.76 us   [m[0;36m    168148[m bytes_per_second=1.83033Mi/s[m
+[m[0;32mbenchmark_fence_accumulate/8/manual_time                             [m[0;33m      4.20 us         4.78 us   [m[0;36m    165197[m bytes_per_second=14.5332Mi/s[m
+[m[0;32mbenchmark_fence_accumulate/64/manual_time                            [m[0;33m      4.25 us         4.84 us   [m[0;36m    165760[m bytes_per_second=114.825Mi/s[m
+[m[0;32mbenchmark_fence_accumulate/512/manual_time                           [m[0;33m      4.73 us         5.28 us   [m[0;36m    147085[m bytes_per_second=825.84Mi/s[m
+[m[0;32mbenchmark_fence_accumulate/4096/manual_time                          [m[0;33m      25.6 us         26.2 us   [m[0;36m     27032[m bytes_per_second=1.19052Gi/s[m
+[m[0;32mbenchmark_fence_accumulate/32768/manual_time                         [m[0;33m       195 us          195 us   [m[0;36m      3663[m bytes_per_second=1.25411Gi/s[m
+[m[0;32mbenchmark_fence_accumulate/262144/manual_time                        [m[0;33m      1574 us         1570 us   [m[0;36m       461[m bytes_per_second=1.24107Gi/s[m
+[m[0;32mbenchmark_pscw_put/1/manual_time                                     [m[0;33m      1.84 us         2.30 us   [m[0;36m    368136[m bytes_per_second=4.13734Mi/s[m
+[m[0;32mbenchmark_pscw_put/8/manual_time                                     [m[0;33m      1.89 us         2.38 us   [m[0;36m    382530[m bytes_per_second=32.3231Mi/s[m
+[m[0;32mbenchmark_pscw_put/64/manual_time                                    [m[0;33m      1.85 us         2.29 us   [m[0;36m    377970[m bytes_per_second=264.258Mi/s[m
+[m[0;32mbenchmark_pscw_put/512/manual_time                                   [m[0;33m      2.08 us         2.52 us   [m[0;36m    335751[m bytes_per_second=1.83513Gi/s[m
+[m[0;32mbenchmark_pscw_put/4096/manual_time                                  [m[0;33m      3.65 us         4.09 us   [m[0;36m    185794[m bytes_per_second=8.3666Gi/s[m
+[m[0;32mbenchmark_pscw_put/32768/manual_time                                 [m[0;33m      16.5 us         16.9 us   [m[0;36m     43348[m bytes_per_second=14.8375Gi/s[m
+[m[0;32mbenchmark_pscw_put/262144/manual_time                                [m[0;33m       123 us          123 us   [m[0;36m      5637[m bytes_per_second=15.8468Gi/s[m
+[m[0;32mbenchmark_pscw_get/1/manual_time                                     [m[0;33m      1.88 us         2.35 us   [m[0;36m    377588[m bytes_per_second=4.05761Mi/s[m
+[m[0;32mbenchmark_pscw_get/8/manual_time                                     [m[0;33m      1.92 us         2.38 us   [m[0;36m    376591[m bytes_per_second=31.7955Mi/s[m
+[m[0;32mbenchmark_pscw_get/64/manual_time                                    [m[0;33m      1.94 us         2.40 us   [m[0;36m    371844[m bytes_per_second=251.865Mi/s[m
+[m[0;32mbenchmark_pscw_get/512/manual_time                                   [m[0;33m      2.14 us         2.58 us   [m[0;36m    329510[m bytes_per_second=1.78643Gi/s[m
+[m[0;32mbenchmark_pscw_get/4096/manual_time                                  [m[0;33m      3.71 us         4.15 us   [m[0;36m    188532[m bytes_per_second=8.22792Gi/s[m
+[m[0;32mbenchmark_pscw_get/32768/manual_time                                 [m[0;33m      16.9 us         17.3 us   [m[0;36m     43141[m bytes_per_second=14.4632Gi/s[m
+[m[0;32mbenchmark_pscw_get/262144/manual_time                                [m[0;33m       125 us          125 us   [m[0;36m      5384[m bytes_per_second=15.6365Gi/s[m
+[m[0;32mbenchmark_pscw_accumulate/1/manual_time                              [m[0;33m      3.28 us         3.73 us   [m[0;36m    201287[m bytes_per_second=2.32574Mi/s[m
+[m[0;32mbenchmark_pscw_accumulate/8/manual_time                              [m[0;33m      3.26 us         3.70 us   [m[0;36m    214837[m bytes_per_second=18.7052Mi/s[m
+[m[0;32mbenchmark_pscw_accumulate/64/manual_time                             [m[0;33m      3.27 us         3.69 us   [m[0;36m    218012[m bytes_per_second=149.382Mi/s[m
+[m[0;32mbenchmark_pscw_accumulate/512/manual_time                            [m[0;33m      3.87 us         4.29 us   [m[0;36m    182974[m bytes_per_second=1010.41Mi/s[m
+[m[0;32mbenchmark_pscw_accumulate/4096/manual_time                           [m[0;33m      25.0 us         25.4 us   [m[0;36m     28300[m bytes_per_second=1.22196Gi/s[m
+[m[0;32mbenchmark_pscw_accumulate/32768/manual_time                          [m[0;33m       192 us          191 us   [m[0;36m      3660[m bytes_per_second=1.27211Gi/s[m
+[m[0;32mbenchmark_pscw_accumulate/262144/manual_time                         [m[0;33m      1562 us         1545 us   [m[0;36m       447[m bytes_per_second=1.25075Gi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/1/manual_time                          [m[0;33m     0.351 us        0.732 us   [m[0;36m   2078452[m bytes_per_second=43.5285Mi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/8/manual_time                          [m[0;33m     0.348 us        0.713 us   [m[0;36m   1966924[m bytes_per_second=350.799Mi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/64/manual_time                         [m[0;33m     0.398 us        0.862 us   [m[0;36m   1778621[m bytes_per_second=2.39496Gi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/512/manual_time                        [m[0;33m      2.27 us         2.74 us   [m[0;36m    316889[m bytes_per_second=3.36141Gi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/4096/manual_time                       [m[0;33m      3.96 us         4.43 us   [m[0;36m    177612[m bytes_per_second=15.3945Gi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/32768/manual_time                      [m[0;33m      16.5 us         16.9 us   [m[0;36m     42610[m bytes_per_second=29.5301Gi/s[m
+[m[0;32mbenchmark_sendrecv_comparison/262144/manual_time                     [m[0;33m       123 us          123 us   [m[0;36m      5759[m bytes_per_second=31.7117Gi/s[m
 [m

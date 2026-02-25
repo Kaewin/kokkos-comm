@@ -59,6 +59,7 @@ class Window {
   }
 
   // Synchronization Functions
+  // Lock/Unlock
   void fence (int assert = 0) { MPI_Win_fence(assert, win); }
 
   void lock(LockType type, int rank, int assert = 0) {
@@ -67,6 +68,17 @@ class Window {
   }
 
   void unlock(int rank) { MPI_Win_unlock(rank, win); }
+
+  // New:
+  void lock_all(int assert = 0) { MPI_Win_lock_all(assert, win); }
+
+  void unlock_all() { MPI_Win_unlock_all(win); }
+
+  void flush(int rank) { MPI_Win_flush(rank, win); }
+
+  void flush_all() { MPI_Win_flush_all(win); }
+
+  void flush_local(int rank) { MPI_Win_flush_local(rank, win); }
 
   // PSCW Functions:
   void post(MPI_Group post_group, int assert = 0) {
