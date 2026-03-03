@@ -18,10 +18,69 @@
 #include <KokkosComm/KokkosComm.hpp>
 #include <functional>
 
+#include <vector>
+
 using Scalar = double;
 
 
 // Helper Functions
+
+// Raw MPI RMA calls without KokkosComm wrappers, for comparison in benchmarks.
+void raw_lock_unlock_put(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  if (rank == 0) {
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 1, 0, win);
+    MPI_Put(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, win);
+    MPI_Win_unlock(1, win);
+  }
+}
+
+void raw_benchmark_lock_unlock_put(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_lock_unlock_put needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+
+  // get n from the state and allocate that many elements.
+  const int n = state.range(0);
+  // Create C array of n elements and expose it via an MPI window for RMA operations.
+
+  // jk doing it with a vector
+  std::vector<double> data(n, 0.0);
+
+
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_put,
+             rank, data.data(), n, win);
+
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// KokkosComm View With MPI RMA Wrapper
 template <typename Space, typename View>
 void lock_unlock_put(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
                      KokkosComm::Window<View> &window) {
@@ -136,6 +195,8 @@ void pscw_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank,
   }
 }
 
+
+
 template <typename Space, typename View>
 void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v) {
   if (rank == 0) {
@@ -145,7 +206,21 @@ void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &, int r
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Benchmark Functions
+// KokkosComm View With MPI RMA Wrapper
 // Lock/Unlock
 void benchmark_lock_unlock_put(benchmark::State &state) {
   int rank, size;
@@ -461,6 +536,15 @@ void benchmark_pscw_accumulate(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
+
+
+
+
+
+
+
+
+
 // Baseline Comparison
 void benchmark_sendrecv_comparison(benchmark::State &state) {
   int rank, size;
@@ -491,6 +575,23 @@ void benchmark_sendrecv_comparison(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n * 2); 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Benchmark Registration
 BENCHMARK(benchmark_lock_unlock_put)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)  
@@ -546,6 +647,19 @@ BENCHMARK(benchmark_pscw_accumulate)
     ->Unit(benchmark::kMicrosecond);
 
 BENCHMARK(benchmark_sendrecv_comparison)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+
+
+
+
+
+
+
+  BENCHMARK(raw_benchmark_lock_unlock_put)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
