@@ -40,25 +40,17 @@ void raw_benchmark_lock_unlock_put(benchmark::State &state) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   if (size < 2) {
-    state.SkipWithError("benchmark_lock_unlock_put needs at least 2 ranks");
+    state.SkipWithError("raw_benchmark_lock_unlock_put needs at least 2 ranks");
     return;
   }
 
   MPI_Win win;
-
-  // get n from the state and allocate that many elements.
   const int n = state.range(0);
-  // Create C array of n elements and expose it via an MPI window for RMA operations.
-
-  // jk doing it with a vector
   std::vector<double> data(n, 0.0);
-
-
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_put,
              rank, data.data(), n, win);
-
   }
   MPI_Win_free(&win);
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
@@ -66,7 +58,35 @@ void raw_benchmark_lock_unlock_put(benchmark::State &state) {
 
 
 
+void raw_benchmark_lock_unlock_get(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  if (size < 2) {
+    state.SkipWithError("raw_benchmark_lock_unlock_get needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_get,
+             rank, data.data(), n, win);
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+void raw_lock_unlock_get(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  if (rank == 1) {
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, win);
+    MPI_Get(data, n, MPI_DOUBLE, 0, 0, n, MPI_DOUBLE, win);
+    MPI_Win_unlock(0, win);
+  }
+}
 
 
 
@@ -660,6 +680,12 @@ BENCHMARK(benchmark_sendrecv_comparison)
 
 
   BENCHMARK(raw_benchmark_lock_unlock_put)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_lock_unlock_get)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
