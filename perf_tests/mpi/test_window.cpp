@@ -206,6 +206,311 @@ void raw_benchmark_fence_accumulate(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
+void raw_pscw_put(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win,
+                  MPI_Group origin_group, MPI_Group target_group) {
+  if (rank == 1) {
+    MPI_Win_post(origin_group, 0, win);
+  }
+  
+  if (rank == 0) {
+    MPI_Win_start(target_group, 0, win);
+    MPI_Put(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, win);
+    MPI_Win_complete(win);
+  }
+  
+  if (rank == 1) {
+    MPI_Win_wait(win);
+  }
+}
+
+void raw_benchmark_pscw_put(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_pscw_put needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_pscw_put,
+             rank, data.data(), n, win, origin_group, target_group);
+  }
+
+  MPI_Win_free(&win);
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+void raw_pscw_get(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win,
+                  MPI_Group origin_group, MPI_Group target_group) {
+  if (rank == 1) {
+    MPI_Win_post(origin_group, 0, win);
+  }
+  
+  if (rank == 0) {
+    MPI_Win_start(target_group, 0, win);
+    MPI_Get(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, win);
+    MPI_Win_complete(win);
+  }
+  
+  if (rank == 1) {
+    MPI_Win_wait(win);
+  }
+}
+
+void raw_benchmark_pscw_get(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_pscw_put needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_pscw_get,
+             rank, data.data(), n, win, origin_group, target_group);
+  }
+
+  MPI_Win_free(&win);
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+void raw_pscw_accumulate(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win,
+                  MPI_Group origin_group, MPI_Group target_group) {
+  if (rank == 1) {
+    MPI_Win_post(origin_group, 0, win);
+  }
+  
+  if (rank == 0) {
+    MPI_Win_start(target_group, 0, win);
+    MPI_Accumulate(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, MPI_SUM, win);
+    MPI_Win_complete(win);
+  }
+  
+  if (rank == 1) {
+    MPI_Win_wait(win);
+  }
+}
+
+void raw_benchmark_pscw_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_pscw_put needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_pscw_accumulate,
+             rank, data.data(), n, win, origin_group, target_group);
+  }
+
+  MPI_Win_free(&win);
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+template <typename Space, typename View>
+void pscw_get(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
+              KokkosComm::Window<View> &window, MPI_Group &origin_group, MPI_Group &target_group) {
+  if (rank == 1) {
+    window.post(origin_group);
+  }
+  
+  if (rank == 0) {
+    window.start(target_group);
+    window.get(v.data(), v.size(), 1, 0);  
+    window.complete();
+  }
+  
+  if (rank == 1) {
+    window.wait();
+  }
+}
+
+void benchmark_pscw_get(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_pscw_get needs at least 2 ranks");
+    return;
+  }
+
+  auto space = Kokkos::DefaultExecutionSpace();
+  using view_type = Kokkos::View<Scalar *>;
+
+  const int n = state.range(0);
+  view_type v("data", n);
+
+  Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
+    v(i) = static_cast<Scalar>(i);
+  });
+  Kokkos::fence();
+
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+  
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  while (state.KeepRunning()) {
+    do_iteration(state, MPI_COMM_WORLD, pscw_get<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, std::ref(window), std::ref(origin_group), std::ref(target_group));
+  }
+
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+template <typename Space, typename View>
+void pscw_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v,
+              KokkosComm::Window<View> &window, MPI_Group &origin_group, MPI_Group &target_group) {
+  if (rank == 1) {
+    window.post(origin_group);
+  }
+  
+  if (rank == 0) {
+    window.start(target_group);
+    window.accumulate(v.data(), v.size(), 1, 0, MPI_SUM);  
+    window.complete();
+  }
+  
+  if (rank == 1) {
+    window.wait();
+  }
+}
+
+void benchmark_pscw_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("benchmark_pscw_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  auto space = Kokkos::DefaultExecutionSpace();
+  using view_type = Kokkos::View<Scalar *>;
+
+  const int n = state.range(0);
+  view_type v("data", n);
+
+  Kokkos::parallel_for("init", n, KOKKOS_LAMBDA(int i) {
+    v(i) = static_cast<Scalar>(i);
+  });
+  Kokkos::fence();
+
+  KokkosComm::Window<view_type> window(v, MPI_COMM_WORLD);
+  
+  MPI_Group world_group, origin_group, target_group;
+  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+  int origin_rank = 0;
+  int target_rank = 1;
+  MPI_Group_incl(world_group, 1, &origin_rank, &origin_group);
+  MPI_Group_incl(world_group, 1, &target_rank, &target_group);
+
+  while (state.KeepRunning()) {
+    do_iteration(state, MPI_COMM_WORLD, pscw_accumulate<Kokkos::DefaultExecutionSpace, view_type>,
+                 space, rank, v, std::ref(window), std::ref(origin_group), std::ref(target_group));
+  }
+
+  MPI_Group_free(&origin_group);
+  MPI_Group_free(&target_group);
+  MPI_Group_free(&world_group);
+
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -822,6 +1127,24 @@ BENCHMARK(benchmark_sendrecv_comparison)
     ->Unit(benchmark::kMicrosecond);
 
     BENCHMARK(raw_benchmark_fence_accumulate)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_pscw_put)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_pscw_get)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_pscw_accumulate)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
