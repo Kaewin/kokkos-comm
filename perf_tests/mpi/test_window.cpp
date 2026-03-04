@@ -56,7 +56,13 @@ void raw_benchmark_lock_unlock_put(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
-
+void raw_lock_unlock_get(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  if (rank == 1) {
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, win);
+    MPI_Get(data, n, MPI_DOUBLE, 0, 0, n, MPI_DOUBLE, win);
+    MPI_Win_unlock(0, win);
+  }
+}
 
 void raw_benchmark_lock_unlock_get(benchmark::State &state) {
   int rank, size;
@@ -80,19 +86,125 @@ void raw_benchmark_lock_unlock_get(benchmark::State &state) {
   state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
 }
 
-void raw_lock_unlock_get(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
-  if (rank == 1) {
-    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 0, 0, win);
-    MPI_Get(data, n, MPI_DOUBLE, 0, 0, n, MPI_DOUBLE, win);
-    MPI_Win_unlock(0, win);
+void raw_lock_unlock_accumulate(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  if (rank == 0) {
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 1, 0, win);
+    MPI_Accumulate(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, MPI_SUM, win);
+    MPI_Win_unlock(1, win);
   }
 }
 
+void raw_benchmark_lock_unlock_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  if (size < 2) {
+    state.SkipWithError("raw_benchmark_lock_unlock_accumulate needs at least 2 ranks");
+    return;
+  }
 
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_accumulate,
+             rank, data.data(), n, win);
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
 
+void raw_fence_put(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  MPI_Win_fence(0, win);
+  if (rank == 0) {
+    MPI_Put(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, win);
+  }
+  MPI_Win_fence(0, win);
+}
 
+void raw_benchmark_fence_put(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  if (size < 2) {
+    state.SkipWithError("raw_benchmark_lock_unlock_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_fence_put,
+             rank, data.data(), n, win);
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+void raw_fence_get(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  MPI_Win_fence(0, win);
+  if (rank == 1) {
+    MPI_Get(data, n, MPI_DOUBLE, 0, 0, n, MPI_DOUBLE, win);
+  }
+  MPI_Win_fence(0, win);
+}
+
+void raw_benchmark_fence_get(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("raw_benchmark_lock_unlock_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_fence_get,
+             rank, data.data(), n, win);
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
+
+void raw_fence_accumulate(benchmark::State &, MPI_Comm, int rank, double *data, int n, MPI_Win win) {
+  MPI_Win_fence(0, win);
+  if (rank == 0) {
+    MPI_Accumulate(data, n, MPI_DOUBLE, 1, 0, n, MPI_DOUBLE, MPI_SUM, win);
+  }
+  MPI_Win_fence(0, win);
+}
+
+void raw_benchmark_fence_accumulate(benchmark::State &state) {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (size < 2) {
+    state.SkipWithError("raw_benchmark_lock_unlock_accumulate needs at least 2 ranks");
+    return;
+  }
+
+  MPI_Win win;
+  const int n = state.range(0);
+  std::vector<double> data(n, 0.0);
+  MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+  while (state.KeepRunning()) { 
+    do_iteration(state, MPI_COMM_WORLD, raw_fence_accumulate,
+             rank, data.data(), n, win);
+  }
+  MPI_Win_free(&win);
+  state.SetBytesProcessed(sizeof(Scalar) * state.iterations() * n);
+}
 
 
 
@@ -686,6 +798,30 @@ BENCHMARK(benchmark_sendrecv_comparison)
     ->Unit(benchmark::kMicrosecond);
 
     BENCHMARK(raw_benchmark_lock_unlock_get)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_lock_unlock_accumulate)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_fence_put)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_fence_get)
+    ->RangeMultiplier(8)
+    ->Range(1, 1<<18)
+    ->UseManualTime()
+    ->Unit(benchmark::kMicrosecond);
+
+    BENCHMARK(raw_benchmark_fence_accumulate)
     ->RangeMultiplier(8)
     ->Range(1, 1<<18)
     ->UseManualTime()
