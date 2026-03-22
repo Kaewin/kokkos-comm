@@ -522,17 +522,16 @@ void pscw_accumulate(benchmark::State &, MPI_Comm comm, const Space &, int rank,
 }
 
 
-
 template <typename Space, typename View>
 void sendrecv_comparison(benchmark::State &, MPI_Comm comm, const Space &, int rank, const View &v) {
   if (rank == 0) {
     MPI_Send(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 1, 0, comm);
+    MPI_Recv(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 1, 0, comm, MPI_STATUS_IGNORE);
   } else if (rank == 1) {
     MPI_Recv(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 0, 0, comm, MPI_STATUS_IGNORE);
+    MPI_Send(v.data(), v.size(), KokkosComm::Impl::mpi_type_v<typename View::value_type>, 0, 0, comm);
   }
 }
-
-
 
 
 
