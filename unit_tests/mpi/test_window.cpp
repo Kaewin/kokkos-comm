@@ -79,15 +79,19 @@ void test_fence_get() {
 
   KokkosComm::Window<decltype(data)> window(data, MPI_COMM_WORLD);
 
+  Scalar value = static_cast<Scalar>(-1);
+
   window.fence();
 
   if (rank == 1) {
-    Scalar value = static_cast<Scalar>(-1); 
-    window.get(&value, 1, 0, 0);
-    EXPECT_EQ(value, static_cast<Scalar>(0));
+      window.get(&value, 1, 0, 0);
   }
 
   window.fence();
+
+  if (rank == 1) {
+      EXPECT_EQ(value, static_cast<Scalar>(0));
+  }
 }
 
 TYPED_TEST(WindowTest, FenceGet) { test_fence_get<typename TestFixture::Scalar>(); }
