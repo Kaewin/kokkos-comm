@@ -18,7 +18,7 @@
 #include <KokkosComm/KokkosComm.hpp>
 #include <functional>
 
-#include <vector>
+// #include <vector>
 
 using Scalar = double;
 
@@ -46,7 +46,8 @@ void raw_benchmark_lock_unlock_put(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_put,
@@ -76,7 +77,8 @@ void raw_benchmark_lock_unlock_get(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_get,
@@ -106,7 +108,8 @@ void raw_benchmark_lock_unlock_accumulate(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_lock_unlock_accumulate,
@@ -136,7 +139,8 @@ void raw_benchmark_fence_put(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_fence_put,
@@ -166,7 +170,8 @@ void raw_benchmark_fence_get(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_fence_get,
@@ -196,7 +201,8 @@ void raw_benchmark_fence_accumulate(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
   while (state.KeepRunning()) { 
     do_iteration(state, MPI_COMM_WORLD, raw_fence_accumulate,
@@ -235,7 +241,8 @@ void raw_benchmark_pscw_put(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
   MPI_Group world_group, origin_group, target_group;
@@ -287,7 +294,8 @@ void raw_benchmark_pscw_get(benchmark::State &state) {
 
   MPI_Win win;
   const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
   MPI_Group world_group, origin_group, target_group;
@@ -338,8 +346,8 @@ void raw_benchmark_pscw_accumulate(benchmark::State &state) {
   }
 
   MPI_Win win;
-  const int n = state.range(0);
-  std::vector<double> data(n, 0.0);
+  Kokkos::View<double*> data("data", n);
+  Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
   MPI_Group world_group, origin_group, target_group;
