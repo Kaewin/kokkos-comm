@@ -346,6 +346,7 @@ void raw_benchmark_pscw_accumulate(benchmark::State &state) {
   }
 
   MPI_Win win;
+  const int n = state.range(0);
   Kokkos::View<double*> data("data", n);
   Kokkos::deep_copy(data, 0.0);
   MPI_Win_create(data.data(), n * sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
