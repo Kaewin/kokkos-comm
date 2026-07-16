@@ -1,0 +1,5 @@
+[smoke r1] fence/put: PASS
+[smoke r1] lock_all/get/flush_all: PASS
+[smoke r0] fence/put: PASS
+[smoke r0] lock_all/get/flush_all: PASS
+SMOKE: ALL PASS

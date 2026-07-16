@@ -1,0 +1,4 @@
+[rank 1] host=gpub021.delta.ncsa.illinois.edu mode=DEVICE cuda_dev=0 MPICH_GPU_SUPPORT_ENABLED=1 N=1048576
+[rank 1] sum=2.1990222070e+12 expected=2.1990222070e+12 rel_err=0.000e+00 -> PASS
+[rank 0] host=gpub021.delta.ncsa.illinois.edu mode=DEVICE cuda_dev=0 MPICH_GPU_SUPPORT_ENABLED=1 N=1048576
+[rank 0] sum=2.1990222070e+12 expected=2.1990222070e+12 rel_err=0.000e+00 -> PASS
