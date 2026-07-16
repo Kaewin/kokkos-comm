@@ -1,0 +1,38 @@
+{
+  "context": {
+    "date": "2026-06-01T11:06:33-05:00",
+    "host_name": "gpua056.delta.ncsa.illinois.edu",
+    "executable": "/u/kparris/repos/kokkos-comm/build/perf_tests/mpi/perf-test-main",
+    "num_cpus": 64,
+    "mhz_per_cpu": 2446,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 524288,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 33554432,
+        "num_sharing": 8
+      }
+    ],
+    "load_avg": [2.25,2.15,2.19],
+    "library_build_type": "release"
+  },
+  "benchmarks": [

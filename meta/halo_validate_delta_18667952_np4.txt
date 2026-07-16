@@ -1,0 +1,11 @@
+-----------------------------------------------------------------------------------------------------
+Benchmark                                           Time             CPU   Iterations UserCounters...
+-----------------------------------------------------------------------------------------------------
+benchmark_2dhalo/manual_time_mean               0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.8882Gi/s nx=512
+benchmark_2dhalo/manual_time_median             0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.9045Gi/s nx=512
+benchmark_2dhalo/manual_time_stddev             0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=81.1012Mi/s nx=3.9138u
+benchmark_2dhalo/manual_time_cv                  0.45 %          0.41 %            20 active_ranks=0.00% bytes_per_second=0.44% nx=0.00%
+benchmark_halo_sendrecv/manual_time_mean        0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.8679Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_median      0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.9183Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_stddev      0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=222.831Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_sendrecv/manual_time_cv           1.27 %          1.13 %            20 active_ranks=0.00% bytes_per_second=1.22% nprops=0.00% nx=0.00%

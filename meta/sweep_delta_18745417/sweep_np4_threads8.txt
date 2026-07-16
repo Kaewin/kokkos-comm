@@ -1,0 +1,28 @@
+2026-06-02T17:56:32-05:00
+Running /u/kparris/repos/kokkos-comm/build/perf_tests/mpi/perf-test-main
+Run on (64 X 2890.94 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x64)
+  L1 Instruction 32 KiB (x64)
+  L2 Unified 512 KiB (x64)
+  L3 Unified 32768 KiB (x8)
+Load Average: 13.81, 5.99, 2.93
+-------------------------------------------------------------------------------------------------------
+Benchmark                                             Time             CPU   Iterations UserCounters...
+-------------------------------------------------------------------------------------------------------
+benchmark_halo_sendrecv/manual_time_mean          0.039 ms        0.041 ms           20 active_ranks=4 bytes_per_second=9.28474Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_median        0.039 ms        0.041 ms           20 active_ranks=4 bytes_per_second=9.27296Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_stddev        0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=53.9952Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_sendrecv/manual_time_cv             0.57 %          0.68 %            20 active_ranks=0.00% bytes_per_second=0.57% nprops=0.00% nx=0.00%
+benchmark_halo_fence/manual_time_mean             0.040 ms        0.042 ms           20 active_ranks=4 bytes_per_second=9.05415Gi/s nprops=3 nx=512
+benchmark_halo_fence/manual_time_median           0.040 ms        0.042 ms           20 active_ranks=4 bytes_per_second=9.09509Gi/s nprops=3 nx=512
+benchmark_halo_fence/manual_time_stddev           0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=95.7715Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_fence/manual_time_cv                1.04 %          0.95 %            20 active_ranks=0.00% bytes_per_second=1.03% nprops=0.00% nx=0.00%
+benchmark_halo_pscw/manual_time_mean              0.040 ms        0.042 ms           20 active_ranks=4 bytes_per_second=9.09422Gi/s nprops=3 nx=512
+benchmark_halo_pscw/manual_time_median            0.040 ms        0.042 ms           20 active_ranks=4 bytes_per_second=9.09597Gi/s nprops=3 nx=512
+benchmark_halo_pscw/manual_time_stddev            0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=18.2033Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_pscw/manual_time_cv                 0.20 %          0.31 %            20 active_ranks=0.00% bytes_per_second=0.20% nprops=0.00% nx=0.00%
+benchmark_halo_lockunlock/manual_time_mean        0.069 ms        0.071 ms           20 active_ranks=4 bytes_per_second=5.34497Gi/s nprops=3 nx=512
+benchmark_halo_lockunlock/manual_time_median      0.069 ms        0.071 ms           20 active_ranks=4 bytes_per_second=5.34458Gi/s nprops=3 nx=512
+benchmark_halo_lockunlock/manual_time_stddev      0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=15.6947Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_lockunlock/manual_time_cv           0.29 %          0.28 %            20 active_ranks=0.00% bytes_per_second=0.29% nprops=0.00% nx=0.00%

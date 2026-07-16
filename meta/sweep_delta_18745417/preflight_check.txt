@@ -1,0 +1,16 @@
+2026-06-02T17:53:08-05:00
+Running /u/kparris/repos/kokkos-comm/build/perf_tests/mpi/perf-test-main
+Run on (64 X 3241.49 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x64)
+  L1 Instruction 32 KiB (x64)
+  L2 Unified 512 KiB (x64)
+  L3 Unified 32768 KiB (x8)
+Load Average: 1.04, 1.16, 1.12
+PASS: Fence        ghost cells match two-sided.
+PASS: PSCW         ghost cells match two-sided.
+PASS: Lock/Unlock  ghost cells match two-sided.
+--------------------------------------------------------------------------------------------------------
+Benchmark                                              Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------
+benchmark_halo_check/iterations:1/manual_time      0.000 ns      3616109 ns            1 active_ranks=4 total_mismatches=0

@@ -1,0 +1,15 @@
+-------------------------------------------------------------------------------------------------------
+Benchmark                                             Time             CPU   Iterations UserCounters...
+-------------------------------------------------------------------------------------------------------
+benchmark_halo_sendrecv/manual_time_mean          0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.9451Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_median        0.020 ms        0.022 ms           20 active_ranks=4 bytes_per_second=17.9393Gi/s nprops=3 nx=512
+benchmark_halo_sendrecv/manual_time_stddev        0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=50.0267Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_sendrecv/manual_time_cv             0.27 %          0.23 %            20 active_ranks=0.00% bytes_per_second=0.27% nprops=0.00% nx=0.00%
+benchmark_halo_pscw/manual_time_mean              0.022 ms        0.023 ms           20 active_ranks=4 bytes_per_second=16.3876Gi/s nprops=3 nx=512
+benchmark_halo_pscw/manual_time_median            0.022 ms        0.023 ms           20 active_ranks=4 bytes_per_second=16.4239Gi/s nprops=3 nx=512
+benchmark_halo_pscw/manual_time_stddev            0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=187.741Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_pscw/manual_time_cv                 1.17 %          1.01 %            20 active_ranks=0.00% bytes_per_second=1.12% nprops=0.00% nx=0.00%
+benchmark_halo_lockunlock/manual_time_mean        0.044 ms        0.045 ms           20 active_ranks=4 bytes_per_second=8.39431Gi/s nprops=3 nx=512
+benchmark_halo_lockunlock/manual_time_median      0.044 ms        0.045 ms           20 active_ranks=4 bytes_per_second=8.34Gi/s nprops=3 nx=512
+benchmark_halo_lockunlock/manual_time_stddev      0.000 ms        0.000 ms           20 active_ranks=30.5765n bytes_per_second=93.9232Mi/s nprops=22.9324n nx=3.9138u
+benchmark_halo_lockunlock/manual_time_cv           1.08 %          0.97 %            20 active_ranks=0.00% bytes_per_second=1.09% nprops=0.00% nx=0.00%
