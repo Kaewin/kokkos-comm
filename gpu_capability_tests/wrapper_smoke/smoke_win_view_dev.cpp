@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   {
-    using ViewT = Kokkos::View<double *, Kokkos::CudaSpace>;
+    using ViewT     = Kokkos::View<double *, Kokkos::CudaSpace>;
     constexpr int N = 8;
     ViewT v("winbuf", N);
 
@@ -22,9 +22,9 @@ int main(int argc, char **argv) {
     }
     Kokkos::deep_copy(v, host_mirror_1);
 
-    KokkosComm::Window<ViewT> win(v, MPI_COMM_WORLD);  
+    KokkosComm::Window<ViewT> win(v, MPI_COMM_WORLD);
 
-    // active target 
+    // active target
     // double src[N]; - now going to be a view
     ViewT src("src", N);
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     Kokkos::deep_copy(src, host_mirror_2);
 
     const int right = (rank + 1) % size;
-    const int left = (rank - 1 + size) % size;
+    const int left  = (rank - 1 + size) % size;
 
     win.fence();
     win.put(src.data(), N, right, 0);
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
     win.flush_all();
     win.unlock_all();
 
-    int f2 = 0;
+    int f2             = 0;
     const int leftleft = (left - 1 + size) % size;
 
     auto host_mirror_3 = Kokkos::create_mirror_view(dst);

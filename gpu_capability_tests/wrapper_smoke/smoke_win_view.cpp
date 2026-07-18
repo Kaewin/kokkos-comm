@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   {
-    using ViewT = Kokkos::View<double *, Kokkos::HostSpace>;
+    using ViewT     = Kokkos::View<double *, Kokkos::HostSpace>;
     constexpr int N = 8;
     ViewT v("winbuf", N);
 
@@ -32,13 +32,13 @@ int main(int argc, char **argv) {
     const int right = (rank + 1) % size, left = (rank - 1 + size) % size;
 
     win.fence();
-    win.put(src, N, right, 0);   // 4 arguments: the whole point
+    win.put(src, N, right, 0);  // 4 arguments: the whole point
     win.fence();
 
     for (int i = 0; i < N; ++i) {
       if (std::abs(v(i) - (100.0 * left + i)) > 1e-14) ++fails;
     }
-    
+
     printf("[smoke r%d] fence/put: %s\n", rank, fails ? "FAIL" : "PASS");
 
     // passive target
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     win.flush_all();
     win.unlock_all();
 
-    int f2 = 0;
+    int f2             = 0;
     const int leftleft = (left - 1 + size) % size;
 
     for (int i = 0; i < N; ++i) {
