@@ -23,6 +23,6 @@ cmake -S "$(dirname "$0")" -B "$(dirname "$0")/build" \
   -DKC_SRC="$KC_SRC" -DKokkos_ROOT="$KOKKOS_ROOT" \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2 -march=znver3" \
   ${COMPILER_ARG:-} ${EXTRA:-}
-cmake --build build -j
+cmake --build "$(dirname "$0")/build" -j
 echo "Run (inside your allocation):  srun -n 2 ./build/smoke_win_view"
 echo "Bridges-2 instead:             srun --mpi=pmix -n 2 ./build/smoke_win_view"
