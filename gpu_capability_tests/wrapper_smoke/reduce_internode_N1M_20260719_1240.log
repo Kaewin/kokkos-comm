@@ -1,0 +1,9 @@
+[time r0] transfer min=6.814e-04 median=6.841e-04 s (N=1048576, reps=50)
+[time r0] reduce min=6.703e-05 s median=6.812e-05 (N=1048576, reps=50)
+[reduce r0] total=2199022206976.0 expected=2199022206976.0 -> PASS
+[smoke r0] fence/get: PASS
+SMOKE: ALL PASS
+[time r1] transfer min=6.811e-04 median=6.840e-04 s (N=1048576, reps=50)
+[time r1] reduce min=6.749e-05 s median=6.784e-05 (N=1048576, reps=50)
+[reduce r1] total=2199022206976.0 expected=2199022206976.0 -> PASS
+[smoke r1] fence/get: PASS
