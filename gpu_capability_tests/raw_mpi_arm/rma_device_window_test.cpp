@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #define CUDA_CHECK(call)                                                       \
   do {                                                                         \
@@ -84,11 +85,27 @@ int main(int argc, char** argv) {
 
   const int peer = 1 - rank;
 
+  // Warmup
   MPI_Win_fence(0, win);   // open epoch                       [ORDER: CPU]
   // [ORDER: CPU on this rank]  [HAUL: NIC inter-node / GPU-IPC intra-node]
   // Target rank's CPU and GPU cores: idle. That is what "one-sided" means.
   MPI_Get(theirs, N, MPI_DOUBLE, peer, /*target_disp=*/0, N, MPI_DOUBLE, win);
   MPI_Win_fence(0, win);   // close epoch: bytes have landed   [ORDER: CPU]
+
+  constexpr int REPS = 50;
+  double t_iter[REPS];
+
+  for(int r = 0; r < REPS; ++r) {
+    const double tr0 = MPI_Wtime();
+    MPI_Win_fence(0, win);
+    MPI_Get(theirs, N, MPI_DOUBLE, peer, 0, N, MPI_DOUBLE, win);
+    MPI_Win_fence(0, win);
+    const double tr1 = MPI_Wtime();
+    t_iter[r] = tr1 - tr0;
+  }
+
+  std::sort(t_iter, t_iter + REPS);
+  std::printf("[time r%d] transfer min=%.3e median=%.3e s (N=%ld, reps=%d)\n", rank, t_iter[0], t_iter[REPS / 2], N, REPS);
 
   // ---- verify the TRANSFER (claim 1 is correctness of window + Get) ----------
   if (use_dev) {

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
+#include <cstdlib>
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
@@ -21,8 +22,8 @@ int main(int argc, char **argv) {
   const int peer = 1 - rank;
 
   {
-    using ViewT     = Kokkos::View<double *, Kokkos::CudaSpace>;
-    constexpr int N = 8;
+    using ViewT  = Kokkos::View<double *, Kokkos::CudaSpace>;
+    const long N = (argc > 1) ? std::atol(argv[1]) : 8;
     ViewT v("winbuf", N);
 
     auto host_mirror_1 = Kokkos::create_mirror_view(v);
@@ -55,17 +56,30 @@ int main(int argc, char **argv) {
     std::sort(t_iter, t_iter + REPS);
     printf("[time r%d] transfer min=%.3e median=%.3e s (N=%d, reps=%d)\n", rank, t_iter[0], t_iter[REPS / 2], N, REPS);
 
-    const double tr0 = MPI_Wtime();
+    // warmup
+    double w1 = 0.0, w2 = 0.0;
+    Kokkos::fence();
+    Kokkos::parallel_reduce("warm_mine", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += v(i); }, w1);
+    Kokkos::parallel_reduce("warm_theirs", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += dst(i); }, w2);
+    Kokkos::fence();
+
+    double tr_iter[REPS];
+
     double sum_mine   = 0.0;
     double sum_theirs = 0.0;
-    Kokkos::parallel_reduce("sum_mine", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += v(i); }, sum_mine);
-    Kokkos::parallel_reduce("sum_theirs", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += dst(i); }, sum_theirs);
-    Kokkos::fence();
-    const double tr1 = MPI_Wtime();
 
-    const double tr_reduce = tr1 - tr0;
+    for (int r = 0; r < REPS; ++r) {
+      const double tr0 = MPI_Wtime();
+      Kokkos::parallel_reduce("sum_mine", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += v(i); }, sum_mine);
+      Kokkos::parallel_reduce("sum_theirs", N, KOKKOS_LAMBDA(const long i, double &acc) { acc += dst(i); }, sum_theirs);
+      Kokkos::fence();
+      double tr1 = MPI_Wtime();
+      tr_iter[r] = tr1 - tr0;
+    }
 
-    printf("[time r%d] reduce=%.3e s (N=%d single-shot)\n", rank, tr_reduce, N);
+    std::sort(tr_iter, tr_iter + REPS);
+
+    printf("[time r%d] reduce min=%.3e s median=%.3e (N=%d, reps=%d)\n", rank, tr_iter[0], tr_iter[REPS / 2], N, REPS);
 
     // Oracle Block:
     const double total    = sum_mine + sum_theirs;
